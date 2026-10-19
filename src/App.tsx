@@ -1,30 +1,57 @@
 import { useState } from "react";
-import { Button } from "./components/ui/button";
-import "./App.css";
+import PhysicsCanvas from "./components/PhysicsCanvas";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./components/ui/card";
+import { Label } from "./components/ui/label";
+import { Slider } from "./components/ui/slider";
 
 function App() {
-  const [count, setCount] = useState(67);
+  const [physicsVariables, setPhysicsVariables] = useState({
+    launchAngle: 0,
+    velocityX: 0,
+    velocityY: 0,
+  });
 
   return (
-    <div className="bg-background text-foreground min-h-screen p-6">
+    <div className="bg-background text-foreground min-h-screen max-w-4xl p-6 mx-auto">
       <div className="mt-12 flex flex-col gap-6">
-        <div className="p-6 mx-auto flex items-center flex-col gap-4 w-full max-w-lg bg-card rounded-lg border">
-          <img src="https://avatars.githubusercontent.com/u/182408519?v=4" className="h-24 w-24 rounded-lg"></img>
-          <h1 className="text-xl font-semibold">CodingDango</h1>
-        </div>
-        <div className="p-6 mx-auto flex items-center flex-col w-full max-w-lg bg-card rounded-lg border text-center">
-          <h2 className="text-4xl font-bold mb-3">Hello Research Project!</h2>
-          <p className="text-muted-foreground mb-12">
-            I dont know what to put here.
-          </p>
+        <Card>
+          <CardHeader className="">
+            <CardTitle>Variable Panel</CardTitle>
+            <CardDescription>This is where you edit variables</CardDescription>
+          </CardHeader>
 
-          <Button
-            type="button"
-            className="counter w-full"
-            onClick={() => setCount((count) => count + 1)}
-          >
-            Count is {count}
-          </Button>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-3">
+                <div className="w-full flex justify-between">
+                  <Label htmlFor="launch-angle">Launch Angle</Label>
+                  <span className="py-2 px-4 bg-secondary rounded-lg">{physicsVariables['launchAngle']}°</span>
+                </div>
+                <Slider
+                  min={0}
+                  max={360}
+                  defaultValue={physicsVariables["launchAngle"]}
+                  id="launch-angle"
+                  onValueChange={(values) =>
+                    setPhysicsVariables(prev => ({
+                      ...prev,
+                      launchAngle: Array.isArray(values) ? values[0] : values
+                    }))
+                  }
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="rounded-lg overflow-hidden">
+          <PhysicsCanvas />
         </div>
       </div>
     </div>
