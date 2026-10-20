@@ -1,19 +1,25 @@
-import { useEffect, useRef } from 'react';
-import p5 from 'p5';
+import { useEffect, useRef } from "react";
+import type { PhysicsState } from "@/types/types";
+import p5 from "p5";
 
-function PhysicsCanvas() {
+function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
   const renderRef = useRef<HTMLDivElement>(null);
+  const stateRef = useRef(physicsState);
+
+  useEffect(() => {
+    stateRef.current = physicsState;
+  }, [physicsState]);
 
   useEffect(() => {
     const container = renderRef.current!;
 
     const sketch = (p: p5) => {
-      const ASPECT = 700 / 400;          // keep your original proportions
-      const WORLD_W = 700;               // your "design" size
+      const ASPECT = 700 / 400; // keep your original proportions
+      const WORLD_W = 700; // your "design" size
       let scale = 1;
 
-      let x = 50, y = 350;
-      const angle = 45, speed = 60, gravity = 9.8;
+      let x = 50,
+        y = 350;
       let time = 0;
       let isFiring = false;
       let trail: { x: number; y: number }[] = [];
@@ -38,12 +44,14 @@ function PhysicsCanvas() {
       };
 
       p.draw = () => {
+        const { angle, speed, gravity } = stateRef.current;
+
         p.background(30);
-        p.scale(scale);   // everything below is drawn in 700x400 "world" units
+        p.scale(scale); // everything below is drawn in 700x400 "world" units
 
         p.stroke(80);
         p.strokeWeight(2);
-        p.line(0, 350, 700, 350);
+        p.line(0, 350, p.width + 20, 350);
 
         p.noStroke();
         p.fill(0, 200, 255, 150);
@@ -67,11 +75,17 @@ function PhysicsCanvas() {
 
         p.fill(200);
         p.textSize(16);
-        p.text('Click anywhere on the screen to LAUNCH!', 20, 30);
+        // p.text("Click anywhere on the screen to LAUNCH!", 20, 30);
       };
 
       p.mousePressed = () => {
-        x = 50; y = 350; time = 0; trail = []; isFiring = true;
+        if (p.mouseX >= 0 && p.mouseX <= p.width && p.mouseY >= 0 && p.mouseY <= p.height) {
+          x = 50;
+          y = 350;
+          time = 0;
+          trail = [];
+          isFiring = true;
+        }
       };
     };
 
