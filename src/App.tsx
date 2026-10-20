@@ -11,16 +11,14 @@ import { Label } from "./components/ui/label";
 import { Slider } from "./components/ui/slider";
 import { Input } from "./components/ui/input";
 import type { PhysicsState } from "./types/types";
+import NumberInput from "./components/NumberInput";
+import SliderField from "./components/SliderField";
 
 function App() {
   const [physicsState, setPhysicsState] = useState<PhysicsState>({
     angle: 45,
     speed: 60,
-    gravity: 9.8
-  });
-
-  const [textState, setTextState] = useState({
-    launchAngleText: "0",
+    gravity: 9.8,
   });
 
   const setState = (key: string, value: number) => {
@@ -37,45 +35,25 @@ function App() {
           </CardHeader>
 
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
-                <div className="w-full flex justify-between">
-                  <Label htmlFor="launch-angle">Launch Angle</Label>
-                  <Input
-                    className="w-13 bg-secondary rounded-lg text-center"
-                    type="number"
-                    value={textState["launchAngleText"]}
-                    min={0}
-                    max={90}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const raw = e.target.value;
-                      const clamped = Math.max(0, Math.min(90, Number(raw)));
-                      setTextState({ launchAngleText: String(clamped) });
-                      setState("angle", clamped);
-                    }}
-                    onBlur={() =>
-                      setTextState({
-                        launchAngleText: String(
-                          physicsState["angle"],
-                        ),
-                      })
-                    }
-                  />
-                </div>
-                <Slider
-                  min={0}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="flex flex-col gap-4">
+                <SliderField
+                  htmlFor="launch-angle"
+                  labelText="Launch Angle"
                   max={90}
-                  step={1}
-                  value={[physicsState["angle"]]}
-                  id="launch-angle"
-                  onValueChange={(values) => {
-                    const newAngle = Array.isArray(values) ? values[0] : values;
-                    setPhysicsState((prev) => ({
-                      ...prev,
-                      angle: newAngle,
-                    }));
-                    setTextState({ launchAngleText: String(newAngle) });
-                  }}
+                  min={0}
+                  physicsKey="angle"
+                  physicsState={physicsState}
+                  setState={setState}
+                />
+                <SliderField
+                  htmlFor="speed"
+                  labelText="Speed"
+                  max={100}
+                  min={0}
+                  physicsKey="speed"
+                  physicsState={physicsState}
+                  setState={setState}
                 />
               </div>
             </div>
@@ -83,7 +61,7 @@ function App() {
         </Card>
 
         <div className="rounded-lg overflow-hidden">
-          <PhysicsCanvas physicsState={physicsState}/>
+          <PhysicsCanvas physicsState={physicsState} />
         </div>
       </div>
     </div>
