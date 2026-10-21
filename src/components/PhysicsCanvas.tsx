@@ -28,7 +28,6 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
       let [x, y] = [startX, startY];
       let [vx, vy] = [0, 0];
-      let time = 0;
       let isFiring = false;
       let hasJustFired = false;
       let trail: { x: number; y: number }[] = [];
@@ -108,7 +107,6 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         ) {
           x = startX;
           y = startY;
-          time = 0;
           trail = [];
           isFiring = true;
           hasJustFired = true;
