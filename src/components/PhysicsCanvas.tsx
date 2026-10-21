@@ -16,13 +16,23 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
     const sketch = (p: p5) => {
       const ASPECT = 700 / 400; // keep your original proportions
       const WORLD_W = 700; // your "design" size
+      const groundY = 325;
+      const startX = 50;
+      const startY = groundY - 10;
+      const backgroundColor = "#86e6fe";
+      const groundStrokeColor = "#0ba42d";
+      const groundColor = "#8e3c2e";
+      const bounciness = 0.8;
+      const dt = 0.08;
       let scale = 1;
 
-      let x = 50,
-        y = 350;
+      let [x, y] = [startX, startY];
+      let [vx, vy] = [0, 0];
       let time = 0;
       let isFiring = false;
+      let hasJustFired = false;
       let trail: { x: number; y: number }[] = [];
+
 
       const getSize = () => {
         const w = container.clientWidth;
@@ -46,45 +56,62 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
       p.draw = () => {
         const { angle, speed, gravity } = stateRef.current;
 
-        p.background(30);
+        p.background(backgroundColor);
         p.scale(scale); // everything below is drawn in 700x400 "world" units
 
-        p.stroke(80);
-        p.strokeWeight(2);
-        p.line(0, 350, p.width + 20, 350);
+        // Ground outline
+        p.stroke(groundStrokeColor);
+        p.strokeWeight(6);
+        p.line(0, groundY, WORLD_W, groundY);
 
+        // Ground itself
+        p.fill(groundColor);
         p.noStroke();
-        p.fill(0, 200, 255, 150);
+        p.rect(0, groundY + 2, WORLD_W, 300);
+
+        // Trajectory
+        p.noStroke();
+        p.fill(255, 80, 80);
+
         for (const pt of trail) p.circle(pt.x, pt.y, 3);
 
+        if (hasJustFired) {
+          vx = speed * p.cos(angle);
+          vy = -speed * p.sin(angle);
+          hasJustFired = false;
+        }
+
         if (isFiring) {
-          const vx = speed * p.cos(angle);
-          const vy = speed * p.sin(angle);
-          x = 50 + vx * time;
-          y = 350 - (vy * time - 0.5 * gravity * time * time);
+          vy += gravity * dt;
+          x += vx * dt;
+          y = Math.min(startY, (y + vy * dt))
           trail.push({ x, y });
-          time += 0.08;
-          if (y >= 350 && time > 0.5) {
-            y = 350;
-            isFiring = false;
+
+          // handle ground interaction
+          if (y >= startY) {
+            vy = -vy * bounciness;
           }
         }
 
         p.fill(255, 80, 80);
+        p.stroke("#FFFFFF");
+        p.strokeWeight(2);
         p.circle(x, y, 20);
-
-        p.fill(200);
-        p.textSize(16);
-        // p.text("Click anywhere on the screen to LAUNCH!", 20, 30);
       };
 
       p.mousePressed = () => {
-        if (p.mouseX >= 0 && p.mouseX <= p.width && p.mouseY >= 0 && p.mouseY <= p.height) {
-          x = 50;
-          y = 350;
+        if (
+          p.mouseX >= 0 &&
+          p.mouseX <= p.width &&
+          p.mouseY >= 0 &&
+          p.mouseY <= p.height
+        ) {
+          x = startX;
+          y = startY;
           time = 0;
           trail = [];
           isFiring = true;
+          hasJustFired = true;
         }
       };
     };
