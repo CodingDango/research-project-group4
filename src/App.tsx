@@ -11,6 +11,8 @@ import type { PhysicsState } from "./types/types";
 import SliderField from "./components/SliderField";
 import NumberInput from "./components/NumberInput";
 import { Label } from "./components/ui/label";
+import { Button } from "./components/ui/button";
+import { FaPause, FaPlay } from "react-icons/fa6";
 
 function App() {
   const [physicsState, setPhysicsState] = useState<PhysicsState>({
@@ -36,20 +38,21 @@ function App() {
             <div className="grid grid-cols-2 gap-6">
               <div className="flex flex-col gap-4">
                 <SliderField
-                  htmlFor="launch-angle"
-                  labelText="Launch Angle"
-                  max={90}
-                  min={0}
-                  physicsKey="angle"
-                  physicsState={physicsState}
-                  setState={setState}
-                />
-                <SliderField
                   htmlFor="speed"
                   labelText="Speed"
                   max={200}
                   min={0}
                   physicsKey="speed"
+                  physicsState={physicsState}
+                  setState={setState}
+                />
+
+                <SliderField
+                  htmlFor="launch-angle"
+                  labelText="Launch Angle"
+                  max={90}
+                  min={0}
+                  physicsKey="angle"
                   physicsState={physicsState}
                   setState={setState}
                 />
@@ -63,6 +66,12 @@ function App() {
                     key={"gravity"}
                     onChange={(v) => setState("gravity", v)}
                   />
+                </div>
+              </div>
+              <div className="flex flex-col gap-4">
+                <div className="flex gap-4">
+                  <Button className={"flex-1"}><FaPlay/></Button>
+                  <Button className={"flex-1"}><FaPause/> </Button>
                 </div>
               </div>
             </div>

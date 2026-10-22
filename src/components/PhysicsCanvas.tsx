@@ -29,7 +29,6 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
       let [ballX, ballY] = [startX, startY];
       let [ballVx, ballVy] = [0, 0];
       let isFiring = false;
-      let hasJustFired = false;
       let trail: { x: number; y: number }[] = [];
 
       const getSize = () => {
@@ -59,7 +58,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
       }
 
       p.draw = () => {
-        const { angle, speed, gravity } = stateRef.current;
+        const { gravity } = stateRef.current;
 
         // Camera
         const cameraX = Math.max(0, ballX - WORLD_W * 0.4);
@@ -86,12 +85,6 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
         for (const pt of trail) p.circle(pt.x, pt.y, 3);
 
-        if (hasJustFired) {
-          ballVx = speed * p.cos(angle);
-          ballVy = -speed * p.sin(angle);
-          hasJustFired = false;
-        }
-
         if (isFiring) {
           ballVy += gravity * dt;
           ballX += ballVx * dt;
@@ -117,11 +110,13 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
           p.mouseY >= 0 &&
           p.mouseY <= p.height
         ) {
+          const { speed, angle } = stateRef.current;
           ballX = startX;
           ballY = startY;
+          ballVx = speed * p.cos(angle);
+          ballVy = -speed * p.sin(angle);
           trail = [];
           isFiring = true;
-          hasJustFired = true;
         }
       };
     };
