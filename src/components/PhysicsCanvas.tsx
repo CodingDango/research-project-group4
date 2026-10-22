@@ -14,9 +14,9 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
     const container = renderRef.current!;
 
     const sketch = (p: p5) => {
-      const ASPECT = 700 / 400; // keep your original proportions
+      const ASPECT = 800 / 500; // keep your original proportions
       const WORLD_W = 700; // your "design" size
-      const groundY = 325;
+      const groundY = 350;
       const startX = 50;
       const startY = groundY - 10;
       const backgroundColor = "#86e6fe";
@@ -26,12 +26,11 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
       const dt = 0.08;
       let scale = 1;
 
-      let [x, y] = [startX, startY];
-      let [vx, vy] = [0, 0];
+      let [ballX, ballY] = [startX, startY];
+      let [ballVx, ballVy] = [0, 0];
       let isFiring = false;
       let hasJustFired = false;
       let trail: { x: number; y: number }[] = [];
-
 
       const getSize = () => {
         const w = container.clientWidth;
@@ -52,21 +51,34 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         scale = w / WORLD_W;
       };
 
+      function cloud(cx: number, cy: number) {
+        p.noStroke();
+        p.fill(255);
+        p.rect(cx - 60, cy, 120, 45, 30); // wide bottom pill
+        p.circle(cx, cy, 50); // smaller pill on top
+      }
+
       p.draw = () => {
         const { angle, speed, gravity } = stateRef.current;
 
+        // Camera
+        const cameraX = Math.max(0, ballX - WORLD_W * 0.4);
+        p.translate(-cameraX, 0);
+
+        // background
         p.background(backgroundColor);
         p.scale(scale); // everything below is drawn in 700x400 "world" units
+        cloud(100, 50);
 
         // Ground outline
         p.stroke(groundStrokeColor);
         p.strokeWeight(6);
-        p.line(0, groundY, WORLD_W, groundY);
+        p.line(0, groundY, 999999, groundY); // using a big ass number
 
         // Ground itself
         p.fill(groundColor);
         p.noStroke();
-        p.rect(0, groundY + 2, WORLD_W, 300);
+        p.rect(0, groundY + 2, 999999, 300);
 
         // Trajectory
         p.noStroke();
@@ -75,27 +87,27 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         for (const pt of trail) p.circle(pt.x, pt.y, 3);
 
         if (hasJustFired) {
-          vx = speed * p.cos(angle);
-          vy = -speed * p.sin(angle);
+          ballVx = speed * p.cos(angle);
+          ballVy = -speed * p.sin(angle);
           hasJustFired = false;
         }
 
         if (isFiring) {
-          vy += gravity * dt;
-          x += vx * dt;
-          y = Math.min(startY, (y + vy * dt))
-          trail.push({ x, y });
+          ballVy += gravity * dt;
+          ballX += ballVx * dt;
+          ballY = Math.min(startY, ballY + ballVy * dt);
+          trail.push({ x: ballX, y: ballY });
 
           // handle ground interaction
-          if (y >= startY) {
-            vy = -vy * bounciness;
+          if (ballY >= startY) {
+            ballVy = -ballVy * bounciness;
           }
         }
 
         p.fill(255, 80, 80);
         p.stroke("#FFFFFF");
         p.strokeWeight(2);
-        p.circle(x, y, 20);
+        p.circle(ballX, ballY, 20);
       };
 
       p.mousePressed = () => {
@@ -105,8 +117,8 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
           p.mouseY >= 0 &&
           p.mouseY <= p.height
         ) {
-          x = startX;
-          y = startY;
+          ballX = startX;
+          ballY = startY;
           trail = [];
           isFiring = true;
           hasJustFired = true;
