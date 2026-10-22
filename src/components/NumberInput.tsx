@@ -4,14 +4,14 @@ function NumberInput({
   value,
   min,
   max,
-  className = "w-13 bg-secondary rounded-lg text-center",
   onChange,
+  className = "w-13 bg-secondary rounded-lg text-center",
 }: {
   className?: string;
   value: number;
   min: number;
   max: number;
-  onChange: (v: number) => void;
+  onChange?: (v: number) => void;
 }) {
   return (
     <Input
@@ -23,7 +23,7 @@ function NumberInput({
       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
         const raw = e.target.value;
         const clamped = Math.max(min, Math.min(max, Number(raw)));
-        onChange(clamped);
+        onChange?.(clamped);
       }}
     />
   );

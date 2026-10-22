@@ -9,6 +9,8 @@ import {
 } from "./components/ui/card";
 import type { PhysicsState } from "./types/types";
 import SliderField from "./components/SliderField";
+import NumberInput from "./components/NumberInput";
+import { Label } from "./components/ui/label";
 
 function App() {
   const [physicsState, setPhysicsState] = useState<PhysicsState>({
@@ -45,12 +47,23 @@ function App() {
                 <SliderField
                   htmlFor="speed"
                   labelText="Speed"
-                  max={100}
+                  max={200}
                   min={0}
                   physicsKey="speed"
                   physicsState={physicsState}
                   setState={setState}
                 />
+
+                <div className="flex gap-4">
+                  <Label>Gravity</Label>
+                  <NumberInput
+                    min={0}
+                    max={100}
+                    value={physicsState["gravity"]}
+                    key={"gravity"}
+                    onChange={(v) => setState("gravity", v)}
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
