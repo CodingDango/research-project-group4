@@ -39,7 +39,7 @@ function App() {
 
           <CardContent>
             <div className="grid grid-cols-2 gap-12">
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-6 ">
                 <SliderField
                   htmlFor="speed"
                   labelText="Speed"
@@ -73,8 +73,8 @@ function App() {
               </div>
               <div className="flex flex-col gap-6">
                 <div className="flex gap-4">
-                  <Label>Select Mode</Label>
-                  <div className="w-48">
+                  <Label className="text-nowrap">Select Mode</Label>
+                  <div className="w-full">
                     <AppSelect
                       items={[
                         { value: "sandbox", label: "Sandbox" },
