@@ -13,12 +13,15 @@ import NumberInput from "./components/NumberInput";
 import { Label } from "./components/ui/label";
 import { Button } from "./components/ui/button";
 import { FaPause, FaPlay } from "react-icons/fa6";
+import AppSelect from "./components/AppSelect";
 
 function App() {
   const [physicsState, setPhysicsState] = useState<PhysicsState>({
     angle: 45,
     speed: 60,
     gravity: 9.8,
+    bounciness: 0.8,
+    friction: 0.8,
   });
 
   const setState = (key: string, value: number) => {
@@ -35,7 +38,7 @@ function App() {
           </CardHeader>
 
           <CardContent>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-12">
               <div className="flex flex-col gap-4">
                 <SliderField
                   htmlFor="speed"
@@ -68,18 +71,29 @@ function App() {
                   />
                 </div>
               </div>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-6">
                 <div className="flex gap-4">
-                  <Button className={"flex-1"}><FaPlay/></Button>
-                  <Button className={"flex-1"}><FaPause/> </Button>
+                  <Label>Select Mode</Label>
+                  <div className="w-48">
+                    <AppSelect
+                      items={[
+                        { value: "sandbox", label: "Sandbox" },
+                        { value: "coordinate", label: "Coordinate Plane" },
+                      ]}
+                      label="Select Mode"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="rounded-lg overflow-hidden">
+        <div className="rounded-lg overflow-hidden relative">
           <PhysicsCanvas physicsState={physicsState} />
+          <Button className={'absolute top-4 right-4 w-10 h-10'} variant={'secondary'}>
+            <FaPause />
+          </Button>
         </div>
       </div>
     </div>
