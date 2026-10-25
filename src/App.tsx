@@ -12,7 +12,7 @@ import SliderField from "./components/SliderField";
 import NumberInput from "./components/NumberInput";
 import { Label } from "./components/ui/label";
 import { Button } from "./components/ui/button";
-import { FaPause, FaPlay } from "react-icons/fa6";
+import { FaPause } from "react-icons/fa6";
 import AppSelect from "./components/AppSelect";
 
 function App() {
