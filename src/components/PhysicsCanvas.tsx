@@ -55,7 +55,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         const dt = Math.min(p.deltaTime / 1000, 0.05) * simSpeed;
 
         if (isFiring) {
-          ballVy += gravity * dt;
+          ballVy += trueGravity * dt;
           ballX += ballVx * dt;
           ballY = Math.min(ballStartY, ballY + ballVy * dt);
           trail.push({ x: ballX, y: ballY });

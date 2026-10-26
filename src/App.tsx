@@ -3,9 +3,6 @@ import PhysicsCanvas from "./components/PhysicsCanvas";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "./components/ui/card";
 import type { PhysicsState } from "./types/types";
 import SliderField from "./components/SliderField";
