@@ -40,7 +40,7 @@ function App() {
             <FaPause />
           </Button>
         </div>
-        <Card className="overflow-y-auto max-h-50 sm:max-h-60 md:max-h-75 h-full">
+        <Card className="overflow-y-auto max-h-80  md:max-h-75 h-full">
           <CardContent>
             <div className="flex flex-col gap-12">
               <div className="flex flex-col gap-4">
