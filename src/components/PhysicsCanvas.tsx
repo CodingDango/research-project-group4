@@ -16,6 +16,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
     const sketch = (p: p5) => {
       const ASPECT = 800 / 500; // keep your original proportions
       const VIEWPORT_W = 750; // your "design" size
+      const VIEWPORT_Y = 450;
       const groundY = 350;
       const BallStartX = 50;
       const ballStartY = groundY - 10;
@@ -50,6 +51,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
       p.draw = () => {
         p.clear();
         const { gravity, bounciness, friction } = stateRef.current;
+        const trueGravity = gravity * 2;
         const dt = Math.min(p.deltaTime / 1000, 0.05) * simSpeed;
 
         if (isFiring) {
@@ -67,8 +69,9 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
         // Camera
         const cameraX = Math.max(0, ballX - VIEWPORT_W * 0.4);
+        const cameraY = Math.min(0, ballY - VIEWPORT_Y * 0.4);
         p.scale(scale);
-        p.translate(-cameraX, 0);
+        p.translate(-cameraX, -cameraY);
 
         // Background
         p.background(bgColor);
@@ -138,7 +141,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
       function spawnCloudsUpTo(limit: number) {
         while (nextCloudX < limit) {
-          clouds.push({ x: nextCloudX, y: p.random(30, 60) });
+          clouds.push({ x: nextCloudX, y: p.random(-20, 20) });
           nextCloudX += p.random(150, 350); // random gap to the next cloud
         }
       }
