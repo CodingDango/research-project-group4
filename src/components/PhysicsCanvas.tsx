@@ -103,6 +103,11 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         p.stroke("#FFFFFF");
         p.strokeWeight(2);
         p.circle(ballX, ballY, 20);
+
+        // FPS counter
+        p.textSize(16)
+        p.text(`${p.frameRate()}`, 10, 20);
+
       };
 
       p.mousePressed = () => {
