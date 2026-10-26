@@ -20,6 +20,9 @@ function NumberInput({
       value={String(value)}
       min={min}
       max={max}
+      onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.select();
+      }}
       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
         const raw = e.target.value;
         const clamped = Math.max(min, Math.min(max, Number(raw)));
