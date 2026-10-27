@@ -5,10 +5,13 @@ export interface PhysicsState {
   bounciness: number;
   friction: number;
   isPaused: boolean;
+  mode: PhysicsStateMode;
 }
 
 export type PhysicsStateSetter = (key: keyof PhysicsState, value: number | boolean) => void;
-  
+
+export type PhysicsStateMode = 'sandbox' | 'coordinate';
+
 export interface AppSelectItem {
   label: string;
   value: string;

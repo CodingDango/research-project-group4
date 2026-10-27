@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -7,31 +7,37 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 export type AppSelectItem = {
-  value: string
-  label: string
-}
+  value: string;
+  label: string;
+};
 
-export default function AppSelect({ 
-  items, 
-  label, 
-  onChange 
-}: { 
-  items: AppSelectItem[]
-  label: string
-  onChange?: (value: string | null) => void // 1. This lets the parent know what was picked
+export default function AppSelect({
+  items,
+  label,
+  defaultValue,
+  onChange,
+}: {
+  items: AppSelectItem[];
+  label: string;
+  defaultValue?: string;
+  onChange?: (value: string | undefined) => void; // 1. This lets the parent know what was picked
 }) {
-  const [selectedValue, setSelectedValue] = useState<string | null>(items[0]?.value || null)
-  const selectedItem = items.find((item) => item.value === selectedValue)
+  const findItem = (value: string | undefined) =>
+    items.find((item) => item?.value == value);
+  const [selectedValue, setSelectedValue] = useState<string | undefined>(
+    defaultValue ? findItem(defaultValue)?.value : items[0]?.value,
+  );
+  const selectedItem = findItem(selectedValue);
 
   return (
-    <Select 
-      value={selectedValue} 
+    <Select
+      value={selectedValue}
       onValueChange={(val) => {
-        setSelectedValue(val)
-        onChange?.(val)
+        setSelectedValue(val || undefined);
+        onChange?.(val || undefined);
       }}
     >
       <SelectTrigger className="w-full">
@@ -50,5 +56,5 @@ export default function AppSelect({
         </SelectGroup>
       </SelectContent>
     </Select>
-  )
+  );
 }

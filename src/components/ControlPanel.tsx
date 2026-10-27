@@ -7,10 +7,10 @@ import type { PhysicsState, PhysicsStateSetter } from "@/types/types";
 
 const ControlPanel = ({
   physicsState,
-  setState
+  setState,
 }: {
   physicsState: PhysicsState;
-  setState: PhysicsStateSetter
+  setState: PhysicsStateSetter;
 }) => {
   return (
     <Card className="h-full">
@@ -74,6 +74,7 @@ const ControlPanel = ({
                       { value: "coordinate", label: "Coordinate Plane" },
                     ]}
                     label="Select Mode"
+                    defaultValue={physicsState["mode"]}
                   />
                 </div>
               </div>
