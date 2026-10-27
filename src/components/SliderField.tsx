@@ -1,6 +1,6 @@
 import { Label } from "./ui/label";
 import { Slider } from "./ui/slider";
-import type { PhysicsState } from "@/types/types";
+import type { PhysicsState, PhysicsStateSetter } from "@/types/types";
 import NumberInput from "./NumberInput";
 
 function SliderField({
@@ -16,11 +16,13 @@ function SliderField({
   labelText: string;
   min: number;
   max: number;
-  physicsKey: string;
+  physicsKey: keyof PhysicsState;
   physicsState: PhysicsState;
-  setState: (key: string, value: number) => void;
+  setState: PhysicsStateSetter;
 }) {
-  const value = physicsState[physicsKey as keyof PhysicsState]
+  const value: number = Number.isFinite(physicsState[physicsKey])
+    ? (physicsState[physicsKey] as number)
+    : 0;
 
   return (
     <div className="flex flex-col gap-3">

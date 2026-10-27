@@ -15,7 +15,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
     const sketch = (p: p5) => {
       const ASPECT = 800 / 500; // keep your original proportions
-      let VIEWPORT_W = 750; // your "design" size
+      const VIEWPORT_W = 750; // your "design" size
       const VIEWPORT_Y = 450;
       const groundY = 350;
       const BallStartX = 50;
@@ -45,17 +45,16 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
       p.windowResized = () => {
         const { w, h } = getSize();
         p.resizeCanvas(w, h);
-        VIEWPORT_W = w < 500 ? 450 : 750;
         scale = w / VIEWPORT_W;
       };
 
       p.draw = () => {
         p.clear();
-        const { gravity, bounciness, friction } = stateRef.current;
+        const { gravity, bounciness, friction, isPaused } = stateRef.current;
         const trueGravity = gravity * 2;
         const dt = Math.min(p.deltaTime / 1000, 0.05) * simSpeed;
 
-        if (isFiring) {
+        if (isFiring && !isPaused) {
           ballVy += trueGravity * dt;
           ballX += ballVx * dt;
           ballY = Math.min(ballStartY, ballY + ballVy * dt);
@@ -109,30 +108,26 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         p.circle(ballX, ballY, 20);
 
         // FPS counter
-        p.textSize(16)
+        p.textSize(16);
         p.text(`${p.frameRate()}`, 10, 20);
-
       };
 
-      p.mousePressed = () => {
-        if (
-          p.mouseX >= 0 &&
-          p.mouseX <= p.width &&
-          p.mouseY >= 0 &&
-          p.mouseY <= p.height
-        ) {
-          const { speed, angle } = stateRef.current;
-          ballX = BallStartX;
-          ballY = ballStartY;
-          ballVx = speed * p.cos(angle);
-          ballVy = -speed * p.sin(angle);
-          trail = [];
-
-          p.randomSeed(cloudSeed);
-          clouds = [];
-          nextCloudX = 0;
-          isFiring = true;
+      p.mousePressed = (event?: MouseEvent) => {
+        if (event && (event.target as HTMLElement)?.tagName !== "CANVAS") {
+          return;
         }
+
+        const { speed, angle } = stateRef.current;
+        ballX = BallStartX;
+        ballY = ballStartY;
+        ballVx = speed * p.cos(angle);
+        ballVy = -speed * p.sin(angle);
+        trail = [];
+
+        p.randomSeed(cloudSeed);
+        clouds = [];
+        nextCloudX = 0;
+        isFiring = true;
       };
 
       const getSize = () => {

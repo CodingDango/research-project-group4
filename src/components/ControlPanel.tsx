@@ -3,14 +3,14 @@ import { Card, CardContent } from "./ui/card";
 import SliderField from "./SliderField";
 import NumberInput from "./NumberInput";
 import AppSelect from "./AppSelect";
-import type { PhysicsState } from "@/types/types";
+import type { PhysicsState, PhysicsStateSetter } from "@/types/types";
 
 const ControlPanel = ({
   physicsState,
   setState
 }: {
   physicsState: PhysicsState;
-  setState: (key: string, value: number) => void;
+  setState: PhysicsStateSetter
 }) => {
   return (
     <Card className="h-full">

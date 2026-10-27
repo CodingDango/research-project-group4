@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { PhysicsState } from "./types/types";
+import type { PhysicsState, PhysicsStateSetter } from "./types/types";
 
 import CanvasStage from "./components/CanvasStage";
 import ControlPanel from "./components/ControlPanel";
@@ -12,16 +12,17 @@ function App() {
     gravity: 9.8,
     bounciness: 0.8,
     friction: 0.8,
+    isPaused: false,
   });
 
-  const setState = (key: string, value: number) => {
+  const setState: PhysicsStateSetter = (key, value) => {
     setPhysicsState((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
     <div className="bg-background text-foreground min-h-screen max-w-4xl p-4 sm:p-6 mx-auto">
       <div className="mt-6 flex flex-col gap-6">
-        <CanvasStage physicsState={physicsState} />
+        <CanvasStage physicsState={physicsState} setState={setState} />
         <ControlPanel physicsState={physicsState} setState={setState} />
       </div>
     </div>
