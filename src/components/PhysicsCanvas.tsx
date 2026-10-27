@@ -2,6 +2,24 @@ import { useEffect, useRef } from "react";
 import type { PhysicsState } from "@/types/types";
 import p5 from "p5";
 
+const CONFIG = {
+  ASPECT: 800 / 500,
+  VIEWPORT_W: 750,
+  VIEWPORT_Y: 450,
+  GROUND_Y: 350,
+  BALL_START_X: 50,
+  BALL_RADIUS: 10,
+  SIM_SPEED: 5,
+  CLOUD_SEED: 6767,
+  COLORS: {
+    bg: "#86e6fe",
+    groundLine: "#0ba42d",
+    groundFill: "#8e3c2e",
+    ball: "#FF5050",
+    ballBorder: "#FFFFFF",
+  },
+};
+
 function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
   const renderRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(physicsState);
@@ -14,157 +32,161 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
     const container = renderRef.current!;
 
     const sketch = (p: p5) => {
-      const ASPECT = 800 / 500; // keep your original proportions
-      const VIEWPORT_W = 750; // your "design" size
-      const VIEWPORT_Y = 450;
-      const groundY = 350;
-      const BallStartX = 50;
-      const ballStartY = groundY - 10;
-      const bgColor = "#86e6fe";
-      const groundStrokeColor = "#0ba42d";
-      const groundColor = "#8e3c2e";
-      const simSpeed = 5;
-      const cloudSeed = 6767;
+      const ballStartY = CONFIG.GROUND_Y - CONFIG.BALL_RADIUS;
+      
+      const ball = {
+        x: CONFIG.BALL_START_X,
+        y: ballStartY,
+        vx: 0,
+        vy: 0,
+      };
 
-      let [ballX, ballY] = [BallStartX, ballStartY];
-      let [ballVx, ballVy] = [0, 0];
-      let scale = 1;
       let isFiring = false;
+      let viewportW = CONFIG.VIEWPORT_W;
+      let scale = 1;
+      let nextCloudX = 0;
       let trail: { x: number; y: number }[] = [];
       let clouds: { x: number; y: number }[] = [];
-      let nextCloudX = 0;
-      p.randomSeed(cloudSeed);
+
+      p.randomSeed(CONFIG.CLOUD_SEED);
 
       p.setup = () => {
         const { w, h } = getSize();
         p.createCanvas(w, h);
         p.angleMode(p.DEGREES);
-        scale = w / VIEWPORT_W;
+        scale = w / viewportW;
       };
 
       p.windowResized = () => {
         const { w, h } = getSize();
         p.resizeCanvas(w, h);
-        scale = w / VIEWPORT_W;
+        scale = w / viewportW;
       };
 
       p.draw = () => {
+        const dt = Math.min(p.deltaTime / 1000, 0.05) * CONFIG.SIM_SPEED;
+
+        updatePhysics(dt);
+
         p.clear();
-        const { gravity, bounciness, friction, isPaused } = stateRef.current;
-        const trueGravity = gravity * 2;
-        const dt = Math.min(p.deltaTime / 1000, 0.05) * simSpeed;
+        p.push();
+        const cameraX = setupCamera();
 
-        if (isFiring && !isPaused) {
-          ballVy += trueGravity * dt;
-          ballX += ballVx * dt;
-          ballY = Math.min(ballStartY, ballY + ballVy * dt);
-          trail.push({ x: ballX, y: ballY });
+        drawBackground(cameraX);
+        drawGround(cameraX);
+        drawTrajectory();
+        drawBall();
 
-          // handle ground interaction
-          if (ballY >= ballStartY) {
-            ballVy = -ballVy * bounciness;
-            ballVx *= friction;
-          }
-        }
-
-        // Camera
-        const cameraX = Math.max(0, ballX - VIEWPORT_W * 0.4);
-        const cameraY = Math.min(0, ballY - VIEWPORT_Y * 0.4);
-        p.scale(scale);
-        p.translate(-cameraX, -cameraY);
-
-        // Background
-        p.background(bgColor);
-
-        // Clouds
-        spawnCloudsUpTo(cameraX + VIEWPORT_W + 300);
-        clouds = clouds.filter((c) => c.x > cameraX - 150);
-        for (const c of clouds) cloud(c.x, c.y);
-
-        // Ground outline
-        p.stroke(groundStrokeColor);
-        p.strokeWeight(6);
-        p.line(0, groundY, 999999, groundY); // using a big ass number
-
-        // Ground itself
-        p.fill(groundColor);
-        p.noStroke();
-        p.rect(cameraX, groundY + 2, VIEWPORT_W, 300);
-
-        // Trajectory
-        p.noStroke();
-        p.fill(255, 80, 80);
-        for (const pt of trail) p.circle(pt.x, pt.y, 3);
-
-        const k = 1;
-
-        // Total velocity (red)
-        arrow(ballX, ballY, ballVx * k, ballVy * k, "#FF5050");
-
-        // Ball
-        p.fill("#FF5050");
-        p.stroke("#FFFFFF");
-        p.strokeWeight(2);
-        p.circle(ballX, ballY, 20);
-
-        // FPS counter
-        p.textSize(16);
-        p.text(`${p.frameRate()}`, 10, 20);
+        p.pop(); 
+        drawHUD();
       };
 
       p.mousePressed = (event?: MouseEvent) => {
-        if (event && (event.target as HTMLElement)?.tagName !== "CANVAS") {
-          return;
+        if (event && (event.target as HTMLElement)?.tagName !== "CANVAS") return;
+        
+        if (stateRef.current.isPaused) return;
+        
+        fireBall();
+      };
+
+      function updatePhysics(dt: number) {
+        const { gravity, bounciness, friction, isPaused } = stateRef.current;
+        if (!isFiring || isPaused) return;
+
+        const trueGravity = gravity * 2;
+        ball.vy += trueGravity * dt;
+        ball.x += ball.vx * dt;
+        ball.y = Math.min(ballStartY, ball.y + ball.vy * dt);
+        trail.push({ x: ball.x, y: ball.y });
+
+        if (ball.y >= ballStartY) {
+          ball.vy = -ball.vy * bounciness;
+          ball.vx *= friction;
         }
+      }
 
-        const { speed, angle, isPaused} = stateRef.current;
-
-        if (isPaused) return;
-
-        ballX = BallStartX;
-        ballY = ballStartY;
-        ballVx = speed * p.cos(angle);
-        ballVy = -speed * p.sin(angle);
+      function fireBall() {
+        const { speed, angle } = stateRef.current;
+        ball.x = CONFIG.BALL_START_X;
+        ball.y = ballStartY;
+        ball.vx = speed * p.cos(angle);
+        ball.vy = -speed * p.sin(angle);
         trail = [];
 
-        p.randomSeed(cloudSeed);
+        p.randomSeed(CONFIG.CLOUD_SEED);
         clouds = [];
         nextCloudX = 0;
         isFiring = true;
-      };
+      }
 
-      const getSize = () => {
-        const w = container.clientWidth;
-        return { w, h: w / ASPECT };
-      };
+      function setupCamera() {
+        const cameraX = Math.max(0, ball.x - viewportW * 0.4);
+        const cameraY = Math.min(0, ball.y - CONFIG.VIEWPORT_Y * 0.4);
+        p.scale(scale);
+        p.translate(-cameraX, -cameraY);
+        return cameraX;
+      }
 
-      function spawnCloudsUpTo(limit: number) {
-        while (nextCloudX < limit) {
+      function drawBackground(cameraX: number) {
+        p.background(CONFIG.COLORS.bg);
+        
+        while (nextCloudX < cameraX + viewportW + 300) {
           clouds.push({ x: nextCloudX, y: p.random(-20, 20) });
-          nextCloudX += p.random(150, 350); // random gap to the next cloud
+          nextCloudX += p.random(150, 350);
+        }
+        clouds = clouds.filter((c) => c.x > cameraX - 150);
+
+        for (const c of clouds) {
+          p.noStroke();
+          p.fill(255);
+          p.rect(c.x - 60, c.y, 120, 45, 30);
+          p.circle(c.x, c.y, 50);
         }
       }
 
-      function cloud(cx: number, cy: number) {
+      function drawGround(cameraX: number) {
+        // Outline
+        p.stroke(CONFIG.COLORS.groundLine);
+        p.strokeWeight(6);
+        p.line(0, CONFIG.GROUND_Y, 999999, CONFIG.GROUND_Y);
+
+        // Earth body
+        p.fill(CONFIG.COLORS.groundFill);
         p.noStroke();
-        p.fill(255);
-        p.rect(cx - 60, cy, 120, 45, 30); // wide bottom pill
-        p.circle(cx, cy, 50); // smaller pill on top
+        p.rect(cameraX, CONFIG.GROUND_Y + 2, viewportW, 300);
       }
 
-      function arrow(
-        x1: number,
-        y1: number,
-        dx: number,
-        dy: number,
-        color: string,
-      ) {
+      function drawTrajectory() {
+        p.noStroke();
+        p.fill(CONFIG.COLORS.ball);
+        for (const pt of trail) p.circle(pt.x, pt.y, 3);
+      }
+
+      function drawBall() {
+        // Velocity vector arrow
+        drawArrow(ball.x, ball.y, ball.vx, ball.vy, CONFIG.COLORS.ball);
+
+        // The Ball
+        p.fill(CONFIG.COLORS.ball);
+        p.stroke(CONFIG.COLORS.ballBorder);
+        p.strokeWeight(2);
+        p.circle(ball.x, ball.y, CONFIG.BALL_RADIUS * 2);
+      }
+
+      function drawHUD() {
+        p.fill(0);
+        p.noStroke();
+        p.textSize(16);
+        p.text(`${p.frameRate().toFixed(0)} FPS`, 10, 25);
+      }
+
+      function drawArrow(x1: number, y1: number, dx: number, dy: number, color: string) {
         const len = Math.hypot(dx, dy);
-        if (len < 1) return; // nothing to draw
+        if (len < 1) return;
 
         const x2 = x1 + dx;
         const y2 = y1 + dy;
-        const head = Math.min(len * 0.4, 20); // arrowhead grows with the arrow, up to a limit
+        const head = Math.min(len * 0.4, 20);
 
         p.stroke(color);
         p.strokeWeight(3);
@@ -177,6 +199,11 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         p.noStroke();
         p.triangle(10, 0, -head, -head / 2, -head, head / 2);
         p.pop();
+      }
+
+      function getSize() {
+        const w = container.clientWidth;
+        return { w, h: w / CONFIG.ASPECT };
       }
     };
 
