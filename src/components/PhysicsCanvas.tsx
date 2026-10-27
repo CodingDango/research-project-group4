@@ -117,7 +117,10 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
           return;
         }
 
-        const { speed, angle } = stateRef.current;
+        const { speed, angle, isPaused} = stateRef.current;
+
+        if (isPaused) return;
+
         ballX = BallStartX;
         ballY = ballStartY;
         ballVx = speed * p.cos(angle);

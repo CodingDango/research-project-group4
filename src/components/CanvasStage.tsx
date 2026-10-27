@@ -18,7 +18,7 @@ const CanvasStage = ({
     <div className="rounded-xl overflow-hidden relative">
       <PhysicsCanvas physicsState={physicsState} />
       <Button
-        className={"absolute top-4 right-4 w-10 h-10 sm:w-12 sm:h-12 rounded-xl"}
+        className={"absolute top-2 right-2 w-10 h-10 sm:w-12 sm:h-12 rounded-xl"}
         variant={"secondary"}
         onClick={onPauseToggle}
       >
