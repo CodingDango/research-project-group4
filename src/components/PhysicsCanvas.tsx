@@ -15,7 +15,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
     const sketch = (p: p5) => {
       const ASPECT = 800 / 500; // keep your original proportions
-      const VIEWPORT_W = 750; // your "design" size
+      let VIEWPORT_W = 750; // your "design" size
       const VIEWPORT_Y = 450;
       const groundY = 350;
       const BallStartX = 50;
@@ -45,6 +45,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
       p.windowResized = () => {
         const { w, h } = getSize();
         p.resizeCanvas(w, h);
+        VIEWPORT_W = w < 500 ? 450 : 750;
         scale = w / VIEWPORT_W;
       };
 
