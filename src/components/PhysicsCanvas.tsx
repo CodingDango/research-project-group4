@@ -72,6 +72,9 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         const dt = Math.min(p.deltaTime / 1000, 0.05) * CONFIG.SIM_SPEED;
 
         handleReset();
+
+        if (stateRef.current.isPaused) return;
+
         updatePhysics(dt);
 
         p.clear();
@@ -81,7 +84,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         drawBackground(cameraX);
         drawGround(cameraX);
         drawTrail();
-        drawAimingTrajectory();
+        drawAimingTrajectory(dt);
         drawBall();
 
         p.pop();
@@ -104,10 +107,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         const trueGravity = lastGravity * 2;
         ball.vy += trueGravity * dt;
         ball.x += ball.vx * dt;
-        ball.y = Math.min(
-          ballStartY,
-          ball.y + (ball.vy + 0.5 * trueGravity * dt) * dt,
-        );
+        ball.y = Math.min(ballStartY, ball.y + ball.vy * dt);
         trail.push({ x: ball.x, y: ball.y });
 
         if (ball.y >= ballStartY) {
@@ -115,26 +115,40 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
           ball.vx *= friction;
         }
       }
+      function drawAimingTrajectory(dt: number) {
+        const { speed, angle, gravity } = hasLaunched
+          ? { speed: lastSpeed, angle: lastAngle, gravity: lastGravity }
+          : stateRef.current;
+        const trueGravity = gravity * 2;
 
-      function drawAimingTrajectory() {
-        const trueGravity = lastGravity * 2;
-        const { speed, angle } = hasLaunched ? {speed: lastSpeed, angle: lastAngle} : stateRef.current;
-        const vx =  speed * p.cos(angle);
-        const vy = -speed * p.sin(angle); 
-
-        const flightTime = (-2 * vy) / trueGravity;
-        if (flightTime <= 0) return; 
+        let ghostX = ballStartX;
+        let ghostY = ballStartY;
+        let ghostVx = speed * p.cos(angle);
+        let ghostVy = -speed * p.sin(angle);
 
         p.noFill();
         p.stroke(255, 80, 80, 160);
         p.strokeWeight(3);
 
         p.beginShape();
-        for (let i = 0; i <= 30; i++) {
-          const t = (i / 30) * flightTime;
-          const px = ballStartX + vx * t;
-          const py = ballStartY + vy * t + 0.5 * trueGravity * t * t;
-          p.vertex(px, py);
+        for (let step = 0; step < 300; step++) {
+          p.vertex(ghostX, ghostY);
+          const prevX = ghostX;
+          const prevY = ghostY;
+
+          ghostVy += trueGravity * dt;
+          ghostX += ghostVx * dt;
+          ghostY += ghostVy * dt;
+
+          // When it crosses the ground:
+          if (ghostY >= ballStartY) {
+            // Find the exact slice where it hits the ground (no kink!)
+            const fraction = (ballStartY - prevY) / (ghostY - prevY);
+            const exactLandingX = prevX + (ghostX - prevX) * fraction;
+
+            p.vertex(exactLandingX, ballStartY);
+            break;
+          }
         }
         p.endShape();
       }
