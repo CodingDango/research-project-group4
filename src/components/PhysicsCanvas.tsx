@@ -127,7 +127,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         let ghostVy = -speed * p.sin(angle);
 
         p.noFill();
-        p.stroke(255, 80, 80, 160);
+        p.stroke(255, 80, 80, 100);
         p.strokeWeight(3);
 
         p.beginShape();
@@ -221,9 +221,14 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
       }
 
       function drawTrail() {
-        p.noStroke();
-        p.fill(CONFIG.COLORS.ball);
-        for (const pt of trail) p.circle(pt.x, pt.y, 3);
+        p.stroke(CONFIG.COLORS.ball);
+        p.strokeWeight(3);
+
+        for (let i = 0; i < trail.length - 2; i += 4) {
+          const p1 = trail[i];
+          const p2 = trail[i + 2];
+          p.line(p1.x, p1.y, p2.x, p2.y);
+        }
       }
 
       function drawBall() {
