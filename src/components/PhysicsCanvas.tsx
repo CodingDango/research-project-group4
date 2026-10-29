@@ -7,7 +7,6 @@ const CONFIG = {
   VIEWPORT_W: 750,
   VIEWPORT_Y: 450,
   GROUND_Y: 350,
-  BALL_START_X: 50,
   BALL_RADIUS: 10,
   SIM_SPEED: 5,
   CLOUD_SEED: 6767,
@@ -33,20 +32,26 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
     const sketch = (p: p5) => {
       const ballStartY = CONFIG.GROUND_Y - CONFIG.BALL_RADIUS;
-      
+      const ballStartX = 50;
+
       const ball = {
-        x: CONFIG.BALL_START_X,
+        x: ballStartX,
         y: ballStartY,
         vx: 0,
         vy: 0,
       };
 
       let isFiring = false;
+      let hasLaunched = false;
+      let lastResetCount = stateRef.current.resetCount;
       let viewportW = CONFIG.VIEWPORT_W;
       let scale = 1;
       let nextCloudX = 0;
       let trail: { x: number; y: number }[] = [];
       let clouds: { x: number; y: number }[] = [];
+      let lastSpeed = stateRef.current.speed;
+      let lastAngle = stateRef.current.angle;
+      let lastGravity = stateRef.current.gravity;
 
       p.randomSeed(CONFIG.CLOUD_SEED);
 
@@ -66,6 +71,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
       p.draw = () => {
         const dt = Math.min(p.deltaTime / 1000, 0.05) * CONFIG.SIM_SPEED;
 
+        handleReset();
         updatePhysics(dt);
 
         p.clear();
@@ -74,29 +80,34 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
         drawBackground(cameraX);
         drawGround(cameraX);
-        drawTrajectory();
+        drawTrail();
+        drawAimingTrajectory();
         drawBall();
 
-        p.pop(); 
+        p.pop();
         drawHUD();
       };
 
       p.mousePressed = (event?: MouseEvent) => {
-        if (event && (event.target as HTMLElement)?.tagName !== "CANVAS") return;
-        
+        if (event && (event.target as HTMLElement)?.tagName !== "CANVAS")
+          return;
+        if (hasLaunched) return;
         if (stateRef.current.isPaused) return;
-        
+
         fireBall();
       };
 
       function updatePhysics(dt: number) {
-        const { gravity, bounciness, friction, isPaused } = stateRef.current;
+        const { bounciness, friction, isPaused } = stateRef.current;
         if (!isFiring || isPaused) return;
 
-        const trueGravity = gravity * 2;
+        const trueGravity = lastGravity * 2;
         ball.vy += trueGravity * dt;
         ball.x += ball.vx * dt;
-        ball.y = Math.min(ballStartY, ball.y + ball.vy * dt);
+        ball.y = Math.min(
+          ballStartY,
+          ball.y + (ball.vy + 0.5 * trueGravity * dt) * dt,
+        );
         trail.push({ x: ball.x, y: ball.y });
 
         if (ball.y >= ballStartY) {
@@ -105,18 +116,57 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         }
       }
 
+      function drawAimingTrajectory() {
+        const trueGravity = lastGravity * 2;
+        const { speed, angle } = hasLaunched ? {speed: lastSpeed, angle: lastAngle} : stateRef.current;
+        const vx =  speed * p.cos(angle);
+        const vy = -speed * p.sin(angle); 
+
+        const flightTime = (-2 * vy) / trueGravity;
+        if (flightTime <= 0) return; 
+
+        p.noFill();
+        p.stroke(255, 80, 80, 160);
+        p.strokeWeight(3);
+
+        p.beginShape();
+        for (let i = 0; i <= 30; i++) {
+          const t = (i / 30) * flightTime;
+          const px = ballStartX + vx * t;
+          const py = ballStartY + vy * t + 0.5 * trueGravity * t * t;
+          p.vertex(px, py);
+        }
+        p.endShape();
+      }
+
       function fireBall() {
         const { speed, angle } = stateRef.current;
-        ball.x = CONFIG.BALL_START_X;
-        ball.y = ballStartY;
         ball.vx = speed * p.cos(angle);
         ball.vy = -speed * p.sin(angle);
-        trail = [];
+        isFiring = true;
+        hasLaunched = true;
+        lastSpeed = stateRef.current.speed;
+        lastAngle = stateRef.current.angle;
+        lastGravity = stateRef.current.gravity;
+      }
 
+      function handleReset() {
+        const { resetCount } = stateRef.current;
+        if (resetCount !== lastResetCount) {
+          lastResetCount = resetCount;
+          resetBall();
+        }
+      }
+
+      function resetBall() {
+        ball.x = ballStartX;
+        ball.y = ballStartY;
+        trail = [];
+        isFiring = false;
+        hasLaunched = false;
         p.randomSeed(CONFIG.CLOUD_SEED);
         clouds = [];
         nextCloudX = 0;
-        isFiring = true;
       }
 
       function setupCamera() {
@@ -129,7 +179,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
       function drawBackground(cameraX: number) {
         p.background(CONFIG.COLORS.bg);
-        
+
         while (nextCloudX < cameraX + viewportW + 300) {
           clouds.push({ x: nextCloudX, y: p.random(-20, 20) });
           nextCloudX += p.random(150, 350);
@@ -156,7 +206,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         p.rect(cameraX, CONFIG.GROUND_Y + 2, viewportW, 300);
       }
 
-      function drawTrajectory() {
+      function drawTrail() {
         p.noStroke();
         p.fill(CONFIG.COLORS.ball);
         for (const pt of trail) p.circle(pt.x, pt.y, 3);
@@ -164,7 +214,17 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
       function drawBall() {
         // Velocity vector arrow
-        drawArrow(ball.x, ball.y, ball.vx, ball.vy, CONFIG.COLORS.ball);
+        if (!hasLaunched) {
+          drawArrow(
+            ball.x,
+            ball.y,
+            stateRef.current.speed * p.cos(stateRef.current.angle),
+            -stateRef.current.speed * p.sin(stateRef.current.angle),
+            CONFIG.COLORS.ball,
+          );
+        } else {
+          drawArrow(ball.x, ball.y, ball.vx, ball.vy, CONFIG.COLORS.ball);
+        }
 
         // The Ball
         p.fill(CONFIG.COLORS.ball);
@@ -180,7 +240,13 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         p.text(`${p.frameRate().toFixed(0)} FPS`, 10, 25);
       }
 
-      function drawArrow(x1: number, y1: number, dx: number, dy: number, color: string) {
+      function drawArrow(
+        x1: number,
+        y1: number,
+        dx: number,
+        dy: number,
+        color: string,
+      ) {
         const len = Math.hypot(dx, dy);
         if (len < 1) return;
 

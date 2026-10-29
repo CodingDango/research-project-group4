@@ -6,6 +6,7 @@ export interface PhysicsState {
   friction: number;
   isPaused: boolean;
   mode: PhysicsStateMode;
+  resetCount: number;
 }
 
 export type PhysicsStateSetter = (key: keyof PhysicsState, value: number | boolean) => void;
