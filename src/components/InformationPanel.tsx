@@ -10,7 +10,7 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
           Distance
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-emerald-400">
-          {Math.floor(stats.distance)}{" "}
+          {stats.distance.toFixed(2)}{" "}
           <span className="text-xs text-muted-foreground font-normal">m</span>
         </span>
       </Card>
@@ -21,7 +21,7 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
           Peak Height
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-sky-400">
-          {Math.floor(stats.maxHeight)}
+          {stats.maxHeight.toFixed(2)}
           <span className="text-xs text-muted-foreground font-normal">m</span>
         </span>
       </Card>
@@ -32,7 +32,7 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
           Air Time
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-amber-400">
-          {stats.airTime.toFixed(1)}{" "}
+          {stats.airTime.toFixed(2)}{" "}
           <span className="text-xs text-muted-foreground font-normal">s</span>
         </span>
       </Card>
@@ -43,7 +43,7 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
           Speed
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-rose-400">
-          {Math.floor(stats.speed)}{" "}
+          {(stats.speed > 0.5 ? stats.speed : 0).toFixed(2)}{" "}
           <span className="text-xs text-muted-foreground font-normal">m/s</span>
         </span>
       </Card>
