@@ -1,7 +1,7 @@
-import type { PhysicsState } from "@/types/types";
+import type { PhysicsStats } from "@/types/types";
 import { Card } from "./ui/card";
 
-const InformationPanel = ({ physicsState }: { physicsState: PhysicsState }) => {
+const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
       {/* Distance / Range */}
@@ -10,7 +10,7 @@ const InformationPanel = ({ physicsState }: { physicsState: PhysicsState }) => {
           Distance
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-emerald-400">
-          142.5{" "}
+          {Math.floor(stats.distance)}{" "}
           <span className="text-xs text-muted-foreground font-normal">m</span>
         </span>
       </Card>
@@ -21,7 +21,7 @@ const InformationPanel = ({ physicsState }: { physicsState: PhysicsState }) => {
           Peak Height
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-sky-400">
-          48.2{" "}
+          {Math.floor(stats.maxHeight)}
           <span className="text-xs text-muted-foreground font-normal">m</span>
         </span>
       </Card>
@@ -32,7 +32,7 @@ const InformationPanel = ({ physicsState }: { physicsState: PhysicsState }) => {
           Air Time
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-amber-400">
-          3.14{" "}
+          {stats.airTime.toFixed(1)}{" "}
           <span className="text-xs text-muted-foreground font-normal">s</span>
         </span>
       </Card>
@@ -43,7 +43,7 @@ const InformationPanel = ({ physicsState }: { physicsState: PhysicsState }) => {
           Speed
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-rose-400">
-          {physicsState.speed}{" "}
+          {Math.floor(stats.speed)}{" "}
           <span className="text-xs text-muted-foreground font-normal">m/s</span>
         </span>
       </Card>

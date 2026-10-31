@@ -7,10 +7,10 @@ import type { PhysicsState, PhysicsStateSetter } from "@/types/types";
 
 const ControlPanel = ({
   physicsState,
-  setState,
+  setPhysicsState,
 }: {
   physicsState: PhysicsState;
-  setState: PhysicsStateSetter;
+  setPhysicsState: PhysicsStateSetter;
 }) => {
   return (
     <Card className="h-full">
@@ -34,7 +34,7 @@ const ControlPanel = ({
                   min={0}
                   physicsKey="speed"
                   physicsState={physicsState}
-                  setState={setState}
+                  setState={setPhysicsState}
                 />
 
                 <SliderField
@@ -44,7 +44,7 @@ const ControlPanel = ({
                   min={0}
                   physicsKey="angle"
                   physicsState={physicsState}
-                  setState={setState}
+                  setState={setPhysicsState}
                 />
               </div>
 
@@ -56,7 +56,7 @@ const ControlPanel = ({
                     max={100}
                     value={physicsState["gravity"]}
                     key={"gravity"}
-                    onChange={(v) => setState("gravity", v)}
+                    onChange={(v) => setPhysicsState("gravity", v)}
                   />
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import type { PhysicsState, PhysicsStateSetter } from "./types/types";
+import { type PhysicsStats, type PhysicsState, type PhysicsStateSetter } from "./types/types";
 
 import InformationPanel from "./components/InformationPanel";
 import CanvasStage from "./components/CanvasStage";
@@ -11,11 +11,18 @@ function App() {
     angle: 45,
     speed: 60,
     gravity: 9.8,
-    bounciness: 0.8,
-    friction: 0.8,
+    bounciness: 0.7,
+    friction: 0.7,
     isPaused: false,
     mode: "sandbox",
     resetCount: 0,
+  });
+
+  const [physicsStats, setPhysicsStats] = useState<PhysicsStats>({
+    speed: 0,
+    airTime: 0,
+    distance: 0,
+    maxHeight: 0,
   });
 
   const setState: PhysicsStateSetter = (key, value) => {
@@ -25,9 +32,9 @@ function App() {
   return (
     <div className="bg-background text-foreground min-h-screen max-w-4xl p-4 sm:p-6 mx-auto">
       <div className="mt-6 flex flex-col gap-6">
-        <CanvasStage physicsState={physicsState} setState={setState} />
-        <InformationPanel physicsState={physicsState} />
-        <ControlPanel physicsState={physicsState} setState={setState} />
+        <CanvasStage physicsState={physicsState} setPhysicsState={setState} setStats={setPhysicsStats}/>
+        <InformationPanel stats={physicsStats}/>
+        <ControlPanel physicsState={physicsState} setPhysicsState={setState} />
       </div>
     </div>
   );

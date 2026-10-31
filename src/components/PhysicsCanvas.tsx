@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { PhysicsState } from "@/types/types";
+import type { PhysicsState, PhysicsStatsSetter } from "@/types/types";
 import p5 from "p5";
 
 const CONFIG = {
@@ -8,8 +8,9 @@ const CONFIG = {
   VIEWPORT_Y: 450,
   GROUND_Y: 350,
   BALL_RADIUS: 10,
-  SIM_SPEED: 5,
+  SIM_SPEED: 6,
   CLOUD_SEED: 6767,
+  PPM: 2,
   COLORS: {
     bg: "#86e6fe",
     groundLine: "#0ba42d",
@@ -19,7 +20,13 @@ const CONFIG = {
   },
 };
 
-function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
+function PhysicsCanvas({
+  physicsState,
+  setStats,
+}: {
+  physicsState: PhysicsState;
+  setStats: PhysicsStatsSetter;
+}) {
   const renderRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(physicsState);
 
@@ -52,6 +59,9 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
       let lastSpeed = stateRef.current.speed;
       let lastAngle = stateRef.current.angle;
       let lastGravity = stateRef.current.gravity;
+      let lastStatsTime = 0;
+      let maxHeight = 0;
+      let airTime = 0;
 
       p.randomSeed(CONFIG.CLOUD_SEED);
 
@@ -76,6 +86,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         if (stateRef.current.isPaused) return;
 
         updatePhysics(dt);
+        updateStats();
 
         p.clear();
         p.push();
@@ -102,10 +113,11 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
       function updatePhysics(dt: number) {
         const { bounciness, friction, isPaused } = stateRef.current;
+
         if (!isFiring || isPaused) return;
 
-        const trueGravity = lastGravity * 2;
-        ball.vy += trueGravity * dt;
+        airTime += dt / CONFIG.SIM_SPEED;
+        ball.vy += lastGravity * dt;
         ball.x += ball.vx * dt;
         ball.y = Math.min(ballStartY, ball.y + ball.vy * dt);
         trail.push({ x: ball.x, y: ball.y });
@@ -113,13 +125,13 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         if (ball.y >= ballStartY) {
           ball.vy = -ball.vy * bounciness;
           ball.vx *= friction;
+          airTime = 0;
         }
       }
       function drawAimingTrajectory(dt: number) {
         const { speed, angle, gravity } = hasLaunched
           ? { speed: lastSpeed, angle: lastAngle, gravity: lastGravity }
           : stateRef.current;
-        const trueGravity = gravity * 2;
 
         let ghostX = ballStartX;
         let ghostY = ballStartY;
@@ -136,7 +148,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
           const prevX = ghostX;
           const prevY = ghostY;
 
-          ghostVy += trueGravity * dt;
+          ghostVy += gravity * dt;
           ghostX += ghostVx * dt;
           ghostY += ghostVy * dt;
 
@@ -259,6 +271,18 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
         p.text(`${p.frameRate().toFixed(0)} FPS`, 10, 25);
       }
 
+      function updateStats(force = false) {
+        const speed = Math.hypot(ball.vx, ball.vy);
+        const distance = ball.x - ballStartX;
+
+        // smaller y = higher, so height = start y minus current y
+        maxHeight = Math.max(maxHeight, ballStartY - ball.y);
+
+        if (force || p.millis() - lastStatsTime > 100) {
+          lastStatsTime = p.millis();
+          setStats({ distance, speed, maxHeight, airTime });
+        }
+      }
       function drawArrow(
         x1: number,
         y1: number,
@@ -294,7 +318,7 @@ function PhysicsCanvas({ physicsState }: { physicsState: PhysicsState }) {
 
     const instance = new p5(sketch, container);
     return () => instance.remove();
-  }, []);
+  }, [setStats]);
 
   return <div ref={renderRef} className="w-full" />;
 }

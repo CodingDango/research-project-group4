@@ -9,9 +9,21 @@ export interface PhysicsState {
   resetCount: number;
 }
 
-export type PhysicsStateSetter = (key: keyof PhysicsState, value: number | boolean) => void;
+export interface PhysicsStats {
+  distance: number;
+  maxHeight: number;
+  airTime: number;
+  speed: number;
+}
 
-export type PhysicsStateMode = 'sandbox' | 'coordinate';
+export type PhysicsStatsSetter = React.Dispatch<React.SetStateAction<PhysicsStats>>;
+
+export type PhysicsStateSetter = (
+  key: keyof PhysicsState,
+  value: number | boolean,
+) => void;
+
+export type PhysicsStateMode = "sandbox" | "coordinate";
 
 export interface AppSelectItem {
   label: string;
