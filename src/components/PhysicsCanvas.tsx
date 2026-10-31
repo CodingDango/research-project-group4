@@ -8,9 +8,9 @@ const CONFIG = {
   VIEWPORT_Y: 450,
   GROUND_Y: 350,
   BALL_RADIUS: 10,
-  SIM_SPEED: 6,
+  SIM_SPEED: 5,
   CLOUD_SEED: 6767,
-  PPM: 2,
+  PPM: 2, // 10 pixels = 1 meter. i think. i dont know.
   COLORS: {
     bg: "#86e6fe",
     groundLine: "#0ba42d",
@@ -40,7 +40,6 @@ function PhysicsCanvas({
     const sketch = (p: p5) => {
       const ballStartY = CONFIG.GROUND_Y - CONFIG.BALL_RADIUS;
       const ballStartX = 50;
-
       const ball = {
         x: ballStartX,
         y: ballStartY,
@@ -113,11 +112,12 @@ function PhysicsCanvas({
 
       function updatePhysics(dt: number) {
         const { bounciness, friction, isPaused } = stateRef.current;
+        const convertedGravity = lastGravity * CONFIG.PPM;
 
         if (!isFiring || isPaused) return;
 
         airTime += dt / CONFIG.SIM_SPEED;
-        ball.vy += lastGravity * dt;
+        ball.vy += convertedGravity * dt;
         ball.x += ball.vx * dt;
         ball.y = Math.min(ballStartY, ball.y + ball.vy * dt);
         trail.push({ x: ball.x, y: ball.y });
@@ -128,15 +128,17 @@ function PhysicsCanvas({
           airTime = 0;
         }
       }
+
       function drawAimingTrajectory(dt: number) {
         const { speed, angle, gravity } = hasLaunched
           ? { speed: lastSpeed, angle: lastAngle, gravity: lastGravity }
           : stateRef.current;
+        const convertedGravity = gravity * CONFIG.PPM;
 
         let ghostX = ballStartX;
         let ghostY = ballStartY;
-        let ghostVx = speed * p.cos(angle);
-        let ghostVy = -speed * p.sin(angle);
+        let ghostVx = speed * CONFIG.PPM * p.cos(angle);
+        let ghostVy = -speed * CONFIG.PPM * p.sin(angle);
 
         p.noFill();
         p.stroke(255, 80, 80, 100);
@@ -148,7 +150,7 @@ function PhysicsCanvas({
           const prevX = ghostX;
           const prevY = ghostY;
 
-          ghostVy += gravity * dt;
+          ghostVy += convertedGravity * dt;
           ghostX += ghostVx * dt;
           ghostY += ghostVy * dt;
 
@@ -167,8 +169,8 @@ function PhysicsCanvas({
 
       function fireBall() {
         const { speed, angle } = stateRef.current;
-        ball.vx = speed * p.cos(angle);
-        ball.vy = -speed * p.sin(angle);
+        ball.vx = speed * CONFIG.PPM * p.cos(angle);
+        ball.vy = -speed * CONFIG.PPM * p.sin(angle);
         isFiring = true;
         hasLaunched = true;
         lastSpeed = stateRef.current.speed;
@@ -193,6 +195,8 @@ function PhysicsCanvas({
         p.randomSeed(CONFIG.CLOUD_SEED);
         clouds = [];
         nextCloudX = 0;
+        maxHeight = 0;
+        airTime = 0;
       }
 
       function setupCamera() {
@@ -249,8 +253,10 @@ function PhysicsCanvas({
           drawArrow(
             ball.x,
             ball.y,
-            stateRef.current.speed * p.cos(stateRef.current.angle),
-            -stateRef.current.speed * p.sin(stateRef.current.angle),
+            stateRef.current.speed * CONFIG.PPM * p.cos(stateRef.current.angle),
+            -stateRef.current.speed *
+              CONFIG.PPM *
+              p.sin(stateRef.current.angle),
             CONFIG.COLORS.ball,
           );
         } else {
@@ -272,15 +278,20 @@ function PhysicsCanvas({
       }
 
       function updateStats(force = false) {
-        const speed = Math.hypot(ball.vx, ball.vy);
-        const distance = ball.x - ballStartX;
+        const speed = Math.hypot(ball.vx, ball.vy) / CONFIG.PPM;
+        const distance = (ball.x - ballStartX) / CONFIG.PPM;
 
         // smaller y = higher, so height = start y minus current y
         maxHeight = Math.max(maxHeight, ballStartY - ball.y);
 
         if (force || p.millis() - lastStatsTime > 100) {
           lastStatsTime = p.millis();
-          setStats({ distance, speed, maxHeight, airTime });
+          setStats({
+            distance,
+            speed,
+            maxHeight: maxHeight / CONFIG.PPM,
+            airTime,
+          });
         }
       }
       function drawArrow(
