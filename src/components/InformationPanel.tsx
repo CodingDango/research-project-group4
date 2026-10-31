@@ -21,7 +21,7 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
           Peak Height
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-sky-400">
-          {stats.maxHeight.toFixed(2)}
+          {stats.maxHeight.toFixed(2)}{" "}
           <span className="text-xs text-muted-foreground font-normal">m</span>
         </span>
       </Card>
