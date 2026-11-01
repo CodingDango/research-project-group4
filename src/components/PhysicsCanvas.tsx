@@ -8,15 +8,16 @@ const CONFIG = {
   VIEWPORT_Y: 450,
   GROUND_Y: 350,
   BALL_RADIUS: 20,
-  SIM_SPEED: 5,
+  SIM_SPEED: 4,
   CLOUD_SEED: 6767,
-  PPM: 2, // 10 pixels = 1 meter. i think. idk
+  PPM: 2, // 2 pixels for 1 meter i think
   COLORS: {
     bg: "#86e6fe",
     groundLine: "#0ba42d",
     groundFill: "#8e3c2e",
     ball: "#FF5050",
     ballBorder: "#FFFFFF",
+    apexLineColor: "#ffa850",
   },
 };
 
@@ -116,14 +117,15 @@ function PhysicsCanvas({
         }
 
         const cameraX = setupCamera();
-        
+
         p.clear();
         p.push();
-        
+
         drawBackground(cameraX);
         drawGround(cameraX);
         drawTrail();
         drawAimingTrajectory(dt);
+        drawApexIndicator();
         drawBall();
 
         p.pop();
@@ -252,6 +254,44 @@ function PhysicsCanvas({
           p.rect(c.x - 60, c.y, 120, 45, 30);
           p.circle(c.x, c.y, 50);
         }
+      }
+
+      function drawApexIndicator() {
+        const launch = hasLaunched ? launchSnapshot : stateRef.current;
+
+        const formulaRange = calculateRange(
+          launch.speed,
+          launch.angle,
+          launch.gravity,
+        );
+        const formulaMaxHeight = calculateMaxHeight(
+          launch.speed,
+          launch.angle,
+          launch.gravity,
+        );
+
+        const apexX = ballStartX + metersToPx(formulaRange / 2);
+        const apexY = ballStartY - metersToPx(formulaMaxHeight);
+
+        p.stroke(CONFIG.COLORS.apexLineColor); 
+        p.strokeWeight(2);
+
+        for (let y = ballStartY; y > apexY; y -= 12) {
+          p.line(apexX, y, apexX, Math.max(apexY + 3, y - 6));
+        }
+
+        p.fill(CONFIG.COLORS.apexLineColor);
+        p.noStroke();
+        p.circle(apexX, apexY + 3, 6);
+
+        p.fill("#0f172a"); 
+        p.textSize(12);
+        p.textAlign(p.LEFT, p.CENTER);
+        p.text(
+          `h = ${formulaMaxHeight.toFixed(1)}m`,
+          apexX + 8,
+          (apexY + ballStartY) / 2,
+        );
       }
 
       function drawGround(cameraX: number) {
