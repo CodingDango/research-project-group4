@@ -10,7 +10,7 @@ const CONFIG = {
   BALL_RADIUS: 20,
   SIM_SPEED: 5,
   CLOUD_SEED: 6767,
-  PPM: 2, // 10 pixels = 1 meter. i think. i dont know.
+  PPM: 2, // 10 pixels = 1 meter. i think. idk
   COLORS: {
     bg: "#86e6fe",
     groundLine: "#0ba42d",
@@ -19,6 +19,22 @@ const CONFIG = {
     ballBorder: "#FFFFFF",
   },
 };
+
+function degToRad(angle: number) {
+  return (angle * Math.PI) / 180;
+}
+
+function calculateRange(speed: number, angleDeg: number, gravity: number) {
+  if (gravity === 0) return 0;
+  const rad = degToRad(angleDeg);
+  return (speed ** 2 * Math.sin(2 * rad)) / Math.abs(gravity);
+}
+
+function calculateMaxHeight(speed: number, angleDeg: number, gravity: number) {
+  if (gravity === 0) return 0;
+  const rad = degToRad(angleDeg);
+  return (speed ** 2 * Math.sin(rad) ** 2) / (2 * Math.abs(gravity));
+}
 
 function PhysicsCanvas({
   physicsState,
@@ -29,10 +45,15 @@ function PhysicsCanvas({
 }) {
   const renderRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(physicsState);
+  const setStatsRef = useRef(setStats);
 
   useEffect(() => {
     stateRef.current = physicsState;
   }, [physicsState]);
+
+  useEffect(() => {
+    setStatsRef.current = setStats;
+  }, [setStats]);
 
   useEffect(() => {
     const container = renderRef.current!;
@@ -56,12 +77,16 @@ function PhysicsCanvas({
       let nextCloudX = 0;
       let trail: { x: number; y: number }[] = [];
       let clouds: { x: number; y: number }[] = [];
-      let lastSpeed = stateRef.current.speed;
-      let lastAngle = stateRef.current.angle;
-      let lastGravity = stateRef.current.gravity;
       let lastStatsTime = 0;
       let currentHeight = 0;
       let airTime = 0;
+
+      let launchSnapshot = {
+        speed: stateRef.current.speed,
+        angle: stateRef.current.angle,
+        gravity: stateRef.current.gravity,
+      };
+
       p.randomSeed(CONFIG.CLOUD_SEED);
 
       p.setup = () => {
@@ -112,7 +137,7 @@ function PhysicsCanvas({
 
       function updatePhysics(dt: number) {
         const { bounciness, friction, isPaused } = stateRef.current;
-        const convertedGravity = lastGravity * CONFIG.PPM;
+        const convertedGravity = launchSnapshot.gravity * CONFIG.PPM;
 
         if (!isFiring || isPaused) return;
 
@@ -130,15 +155,15 @@ function PhysicsCanvas({
       }
 
       function drawAimingTrajectory(dt: number) {
-        const { speed, angle, gravity } = hasLaunched
-          ? { speed: lastSpeed, angle: lastAngle, gravity: lastGravity }
-          : stateRef.current;
-        const convertedGravity = gravity * CONFIG.PPM;
+        const launchValues = hasLaunched ? launchSnapshot : stateRef.current;
+        const convertedGravity = launchValues.gravity * CONFIG.PPM;
 
         let ghostX = ballStartX;
         let ghostY = ballStartY;
-        let ghostVx = speed * CONFIG.PPM * p.cos(angle);
-        let ghostVy = -speed * CONFIG.PPM * p.sin(angle);
+        let ghostVx =
+          launchValues.speed * CONFIG.PPM * p.cos(launchValues.angle);
+        let ghostVy =
+          -launchValues.speed * CONFIG.PPM * p.sin(launchValues.angle);
 
         p.noFill();
         p.stroke(255, 80, 80, 100);
@@ -173,9 +198,11 @@ function PhysicsCanvas({
         ball.vy = -speed * CONFIG.PPM * p.sin(angle);
         isFiring = true;
         hasLaunched = true;
-        lastSpeed = stateRef.current.speed;
-        lastAngle = stateRef.current.angle;
-        lastGravity = stateRef.current.gravity;
+        launchSnapshot = {
+          speed: stateRef.current.speed,
+          angle: stateRef.current.angle,
+          gravity: stateRef.current.gravity,
+        };
       }
 
       function handleReset() {
@@ -198,7 +225,6 @@ function PhysicsCanvas({
         nextCloudX = 0;
         currentHeight = 0;
         airTime = 0;
-
       }
 
       function setupCamera() {
@@ -281,9 +307,19 @@ function PhysicsCanvas({
 
       function updateStats() {
         const speed = Math.hypot(ball.vx, ball.vy) / CONFIG.PPM;
-        const formulaRange =
-          (lastSpeed ** 2 * p.sin(2 * lastAngle)) / p.abs(lastGravity);
-        const formulaMaxHeight = (lastSpeed ** 2 * p.sin(lastAngle) ** 2) / (2 * lastGravity);
+
+        const formulaRange = calculateRange(
+          launchSnapshot.speed,
+          launchSnapshot.angle,
+          launchSnapshot.gravity,
+        );
+
+        const formulaMaxHeight = calculateMaxHeight(
+          launchSnapshot.speed,
+          launchSnapshot.angle,
+          launchSnapshot.gravity,
+        );
+
         const range = Math.min(
           (ball.x - ballStartX) / CONFIG.PPM,
           formulaRange,
@@ -292,17 +328,19 @@ function PhysicsCanvas({
         if (!hasReachedApex) {
           currentHeight = Math.max(currentHeight, ballStartY - ball.y);
 
-          if ((ballStartY - ball.y) < currentHeight) {
+          if (ballStartY - ball.y < currentHeight) {
             hasReachedApex = true;
           }
         }
 
         if (p.millis() - lastStatsTime > 100) {
           lastStatsTime = p.millis();
-          setStats({
+          setStatsRef.current({
             range,
             speed,
-            maxHeight: !hasReachedApex ? currentHeight / CONFIG.PPM : formulaMaxHeight,
+            maxHeight: !hasReachedApex
+              ? currentHeight / CONFIG.PPM
+              : formulaMaxHeight,
             airTime,
           });
         }
@@ -342,7 +380,7 @@ function PhysicsCanvas({
 
     const instance = new p5(sketch, container);
     return () => instance.remove();
-  }, [setStats]);
+  }, []);
 
   return <div ref={renderRef} className="w-full" />;
 }
