@@ -4,8 +4,6 @@ import p5 from "p5";
 
 const CONFIG = {
   ASPECT: 800 / 500,
-  VIEWPORT_W: 750,
-  VIEWPORT_Y: 450,
   GROUND_Y: 350,
   BALL_RADIUS: 20,
   SIM_SPEED: 4,
@@ -76,8 +74,10 @@ function PhysicsCanvas({
       let hasLaunched = false;
       let hasReachedApex = false;
       let lastResetCount = stateRef.current.resetCount;
-      let viewportW = CONFIG.VIEWPORT_W;
+
+      let virtualW = 800;
       let scale = 1;
+
       let nextCloudX = 0;
       let trail: { x: number; y: number }[] = [];
       let clouds: { x: number; y: number }[] = [];
@@ -94,16 +94,14 @@ function PhysicsCanvas({
       p.randomSeed(CONFIG.CLOUD_SEED);
 
       p.setup = () => {
-        const { w, h } = getSize();
+        const { w, h } = updateDimensions();
         p.createCanvas(w, h);
         p.angleMode(p.DEGREES);
-        scale = w / viewportW;
       };
 
       p.windowResized = () => {
-        const { w, h } = getSize();
+        const { w, h } = updateDimensions();
         p.resizeCanvas(w, h);
-        scale = w / viewportW;
       };
 
       p.draw = () => {
@@ -116,10 +114,10 @@ function PhysicsCanvas({
           updatePhysics(dt);
         }
 
-        const cameraX = setupCamera();
-
         p.clear();
         p.push();
+
+        const cameraX = setupCamera();
 
         drawBackground(cameraX);
         drawGround(cameraX);
@@ -158,6 +156,14 @@ function PhysicsCanvas({
           ball.vx *= friction;
           airTime = 0;
         }
+      }
+
+      function updateDimensions() {
+        const { w, h, targetViewportW } = getResponsiveSettings();
+        virtualW = targetViewportW;
+        scale = w / virtualW;
+
+        return { w, h };
       }
 
       function drawAimingTrajectory(dt: number) {
@@ -232,8 +238,13 @@ function PhysicsCanvas({
       }
 
       function setupCamera() {
-        const cameraX = Math.max(0, ball.x - viewportW * 0.4);
-        const cameraY = Math.min(0, ball.y - CONFIG.VIEWPORT_Y * 0.4);
+        const groundCameraY = CONFIG.GROUND_Y - (p.height - 80) / scale;
+
+        const ballCameraY = ball.y - (p.height * 0.5) / scale;
+        const cameraY = Math.min(groundCameraY, ballCameraY);
+
+        const cameraX = Math.max(0, ball.x - (p.width * 0.3) / scale);
+
         p.scale(scale);
         p.translate(-cameraX, -cameraY);
         return cameraX;
@@ -242,7 +253,7 @@ function PhysicsCanvas({
       function drawBackground(cameraX: number) {
         p.background(CONFIG.COLORS.bg);
 
-        while (nextCloudX < cameraX + viewportW + 300) {
+        while (nextCloudX < cameraX + virtualW + 300) {
           clouds.push({ x: nextCloudX, y: p.random(-20, 20) });
           nextCloudX += p.random(150, 350);
         }
@@ -273,7 +284,7 @@ function PhysicsCanvas({
         const apexX = ballStartX + metersToPx(formulaRange / 2);
         const apexY = ballStartY - metersToPx(formulaMaxHeight);
 
-        p.stroke(CONFIG.COLORS.apexLineColor); 
+        p.stroke(CONFIG.COLORS.apexLineColor);
         p.strokeWeight(2);
 
         for (let y = ballStartY; y > apexY; y -= 12) {
@@ -284,14 +295,10 @@ function PhysicsCanvas({
         p.noStroke();
         p.circle(apexX, apexY + 3, 6);
 
-        p.fill("#0f172a"); 
+        p.fill("#0f172a");
         p.textSize(12);
         p.textAlign(p.CENTER, p.CENTER);
-        p.text(
-          `h = ${formulaMaxHeight.toFixed(2)} m`,
-          apexX,
-          apexY - 12,
-        );
+        p.text(`h = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 12);
       }
 
       function drawGround(cameraX: number) {
@@ -303,7 +310,7 @@ function PhysicsCanvas({
         // Earth body
         p.fill(CONFIG.COLORS.groundFill);
         p.noStroke();
-        p.rect(cameraX, CONFIG.GROUND_Y + 2, viewportW, 300);
+        p.rect(cameraX, CONFIG.GROUND_Y + 2, virtualW, 300);
       }
 
       function drawTrail() {
@@ -414,9 +421,18 @@ function PhysicsCanvas({
         p.pop();
       }
 
-      function getSize() {
+      function getResponsiveSettings() {
         const w = container.clientWidth;
-        return { w, h: w / CONFIG.ASPECT };
+        const isMobile = w < 600;
+
+        const aspect = isMobile ? 4 / 3 : 16 / 10;
+        const targetViewportW = isMobile ? 440 : 750;
+
+        return {
+          w,
+          h: Math.round(w / aspect),
+          targetViewportW,
+        };
       }
     };
 
@@ -424,7 +440,7 @@ function PhysicsCanvas({
     return () => instance.remove();
   }, []);
 
-  return <div ref={renderRef} className="w-full" />;
+  return <div ref={renderRef} className="w-full select-none touch-none" />;
 }
 
 export default PhysicsCanvas;

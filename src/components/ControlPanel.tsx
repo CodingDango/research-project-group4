@@ -25,7 +25,7 @@ const ControlPanel = ({
                 This is where you do stuff
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
               <div className="flex flex-col gap-6">
                 <SliderField
                   htmlFor="speed"
@@ -49,8 +49,8 @@ const ControlPanel = ({
               </div>
 
               <div className="flex items-start">
-                <div className="w-full sm:w-auto flex justify-between gap-4">
-                  <Label>Gravity:</Label>
+                <div className="w-full">
+                  <Label className="w-24 inline-block">Gravity:</Label>
                   <NumberInput
                     min={0}
                     max={100}
@@ -63,20 +63,18 @@ const ControlPanel = ({
             </div>
           </div>
 
-          <div className="">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <div className="flex flex-col gap-6">
               <div className="flex gap-4">
-                <Label className="text-nowrap">Select Mode</Label>
-                <div className="w-full">
-                  <AppSelect
-                    items={[
-                      { value: "sandbox", label: "Sandbox" },
-                      { value: "coordinate", label: "Coordinate Plane" },
-                    ]}
-                    label="Select Mode"
-                    defaultValue={physicsState["mode"]}
-                  />
-                </div>
+                <Label className="text-nowrap w-28">Select Mode</Label>
+                <AppSelect
+                  items={[
+                    { value: "sandbox", label: "Sandbox" },
+                    { value: "coordinate", label: "Coordinate Plane" },
+                  ]}
+                  label="Select Mode"
+                  defaultValue={physicsState["mode"]}
+                />
               </div>
             </div>
           </div>
