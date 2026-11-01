@@ -110,15 +110,16 @@ function PhysicsCanvas({
 
         handleReset();
 
-        if (stateRef.current.isPaused) return;
+        if (!stateRef.current.isPaused) {
+          updateStats();
+          updatePhysics(dt);
+        }
 
-        updatePhysics(dt);
-        updateStats();
-
+        const cameraX = setupCamera();
+        
         p.clear();
         p.push();
-        const cameraX = setupCamera();
-
+        
         drawBackground(cameraX);
         drawGround(cameraX);
         drawTrail();
