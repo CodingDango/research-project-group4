@@ -10,7 +10,7 @@ export interface PhysicsState {
 }
 
 export interface PhysicsStats {
-  distance: number;
+  range: number;
   maxHeight: number;
   airTime: number;
   speed: number;

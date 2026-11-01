@@ -7,10 +7,10 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
       {/* Distance / Range */}
       <Card className="rounded-xl p-4 text-center gap-1">
         <span className="block text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Distance
+          Range
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-emerald-400">
-          {stats.distance.toFixed(2)}{" "}
+          {stats.range.toFixed(2)}{" "}
           <span className="text-xs text-muted-foreground font-normal">m</span>
         </span>
       </Card>
@@ -18,7 +18,7 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
       {/* Max Height */}
       <Card className="rounded-xl p-4 text-center gap-1">
         <span className="block text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Peak Height
+          Max Height
         </span>
         <span className="text-base sm:text-lg font-mono font-bold text-sky-400">
           {stats.maxHeight.toFixed(2)}{" "}

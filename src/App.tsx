@@ -21,7 +21,7 @@ function App() {
   const [physicsStats, setPhysicsStats] = useState<PhysicsStats>({
     speed: 0,
     airTime: 0,
-    distance: 0,
+    range: 0,
     maxHeight: 0,
   });
 

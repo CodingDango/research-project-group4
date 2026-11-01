@@ -7,7 +7,7 @@ const CONFIG = {
   VIEWPORT_W: 750,
   VIEWPORT_Y: 450,
   GROUND_Y: 350,
-  BALL_RADIUS: 10,
+  BALL_RADIUS: 20,
   SIM_SPEED: 5,
   CLOUD_SEED: 6767,
   PPM: 2, // 10 pixels = 1 meter. i think. i dont know.
@@ -38,7 +38,7 @@ function PhysicsCanvas({
     const container = renderRef.current!;
 
     const sketch = (p: p5) => {
-      const ballStartY = CONFIG.GROUND_Y - CONFIG.BALL_RADIUS;
+      const ballStartY = CONFIG.GROUND_Y - CONFIG.BALL_RADIUS / 2;
       const ballStartX = 50;
       const ball = {
         x: ballStartX,
@@ -49,6 +49,7 @@ function PhysicsCanvas({
 
       let isFiring = false;
       let hasLaunched = false;
+      let hasReachedApex = false;
       let lastResetCount = stateRef.current.resetCount;
       let viewportW = CONFIG.VIEWPORT_W;
       let scale = 1;
@@ -59,9 +60,8 @@ function PhysicsCanvas({
       let lastAngle = stateRef.current.angle;
       let lastGravity = stateRef.current.gravity;
       let lastStatsTime = 0;
-      let maxHeight = 0;
+      let currentHeight = 0;
       let airTime = 0;
-
       p.randomSeed(CONFIG.CLOUD_SEED);
 
       p.setup = () => {
@@ -192,11 +192,13 @@ function PhysicsCanvas({
         trail = [];
         isFiring = false;
         hasLaunched = false;
+        hasReachedApex = false;
         p.randomSeed(CONFIG.CLOUD_SEED);
         clouds = [];
         nextCloudX = 0;
-        maxHeight = 0;
+        currentHeight = 0;
         airTime = 0;
+
       }
 
       function setupCamera() {
@@ -267,7 +269,7 @@ function PhysicsCanvas({
         p.fill(CONFIG.COLORS.ball);
         p.stroke(CONFIG.COLORS.ballBorder);
         p.strokeWeight(2);
-        p.circle(ball.x, ball.y, CONFIG.BALL_RADIUS * 2);
+        p.circle(ball.x, ball.y, CONFIG.BALL_RADIUS);
       }
 
       function drawHUD() {
@@ -277,19 +279,30 @@ function PhysicsCanvas({
         p.text(`${p.frameRate().toFixed(0)} FPS`, 10, 25);
       }
 
-      function updateStats(force = false) {
+      function updateStats() {
         const speed = Math.hypot(ball.vx, ball.vy) / CONFIG.PPM;
-        const distance = (ball.x - ballStartX) / CONFIG.PPM;
+        const formulaRange =
+          (lastSpeed ** 2 * p.sin(2 * lastAngle)) / p.abs(lastGravity);
+        const formulaMaxHeight = (lastSpeed ** 2 * p.sin(lastAngle) ** 2) / (2 * lastGravity);
+        const range = Math.min(
+          (ball.x - ballStartX) / CONFIG.PPM,
+          formulaRange,
+        );
 
-        // smaller y = higher, so height = start y minus current y
-        maxHeight = Math.max(maxHeight, ballStartY - ball.y);
+        if (!hasReachedApex) {
+          currentHeight = Math.max(currentHeight, ballStartY - ball.y);
 
-        if (force || p.millis() - lastStatsTime > 100) {
+          if ((ballStartY - ball.y) < currentHeight) {
+            hasReachedApex = true;
+          }
+        }
+
+        if (p.millis() - lastStatsTime > 100) {
           lastStatsTime = p.millis();
           setStats({
-            distance,
+            range,
             speed,
-            maxHeight: maxHeight / CONFIG.PPM,
+            maxHeight: !hasReachedApex ? currentHeight / CONFIG.PPM : formulaMaxHeight,
             airTime,
           });
         }
