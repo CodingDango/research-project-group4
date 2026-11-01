@@ -286,11 +286,11 @@ function PhysicsCanvas({
 
         p.fill("#0f172a"); 
         p.textSize(12);
-        p.textAlign(p.LEFT, p.CENTER);
+        p.textAlign(p.CENTER, p.CENTER);
         p.text(
-          `h = ${formulaMaxHeight.toFixed(1)}m`,
-          apexX + 8,
-          (apexY + ballStartY) / 2,
+          `h = ${formulaMaxHeight.toFixed(2)} m`,
+          apexX,
+          apexY - 12,
         );
       }
 
