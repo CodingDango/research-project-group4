@@ -36,6 +36,9 @@ function calculateMaxHeight(speed: number, angleDeg: number, gravity: number) {
   return (speed ** 2 * Math.sin(rad) ** 2) / (2 * Math.abs(gravity));
 }
 
+const metersToPx = (meters: number) => meters * CONFIG.PPM;
+const pxToMeters = (pixels: number) => pixels / CONFIG.PPM;
+
 function PhysicsCanvas({
   physicsState,
   setStats,
@@ -137,7 +140,7 @@ function PhysicsCanvas({
 
       function updatePhysics(dt: number) {
         const { bounciness, friction, isPaused } = stateRef.current;
-        const convertedGravity = launchSnapshot.gravity * CONFIG.PPM;
+        const convertedGravity = metersToPx(launchSnapshot.gravity);
 
         if (!isFiring || isPaused) return;
 
@@ -155,15 +158,13 @@ function PhysicsCanvas({
       }
 
       function drawAimingTrajectory(dt: number) {
-        const launchValues = hasLaunched ? launchSnapshot : stateRef.current;
-        const convertedGravity = launchValues.gravity * CONFIG.PPM;
+        const launch = hasLaunched ? launchSnapshot : stateRef.current;
+        const convertedGravity = metersToPx(launch.gravity);
 
         let ghostX = ballStartX;
         let ghostY = ballStartY;
-        let ghostVx =
-          launchValues.speed * CONFIG.PPM * p.cos(launchValues.angle);
-        let ghostVy =
-          -launchValues.speed * CONFIG.PPM * p.sin(launchValues.angle);
+        let ghostVx = metersToPx(launch.speed * p.cos(launch.angle));
+        let ghostVy = metersToPx(-launch.speed * p.sin(launch.angle));
 
         p.noFill();
         p.stroke(255, 80, 80, 100);
@@ -194,8 +195,8 @@ function PhysicsCanvas({
 
       function fireBall() {
         const { speed, angle } = stateRef.current;
-        ball.vx = speed * CONFIG.PPM * p.cos(angle);
-        ball.vy = -speed * CONFIG.PPM * p.sin(angle);
+        ball.vx = metersToPx(speed * p.cos(angle));
+        ball.vy = metersToPx(-speed * p.sin(angle));
         isFiring = true;
         hasLaunched = true;
         launchSnapshot = {
@@ -277,19 +278,21 @@ function PhysicsCanvas({
 
       function drawBall() {
         // Velocity vector arrow
-        if (!hasLaunched) {
-          drawArrow(
-            ball.x,
-            ball.y,
-            stateRef.current.speed * CONFIG.PPM * p.cos(stateRef.current.angle),
-            -stateRef.current.speed *
-              CONFIG.PPM *
-              p.sin(stateRef.current.angle),
-            CONFIG.COLORS.ball,
-          );
-        } else {
-          drawArrow(ball.x, ball.y, ball.vx, ball.vy, CONFIG.COLORS.ball);
-        }
+        const velocityArrowDx = !hasLaunched
+          ? metersToPx(stateRef.current.speed * p.cos(stateRef.current.angle))
+          : ball.vx;
+
+        const velocityArrowDy = !hasLaunched
+          ? metersToPx(-stateRef.current.speed * p.sin(stateRef.current.angle))
+          : ball.vy;
+
+        drawArrow(
+          ball.x,
+          ball.y,
+          velocityArrowDx,
+          velocityArrowDy,
+          CONFIG.COLORS.ball,
+        );
 
         // The Ball
         p.fill(CONFIG.COLORS.ball);
@@ -306,7 +309,14 @@ function PhysicsCanvas({
       }
 
       function updateStats() {
-        const speed = Math.hypot(ball.vx, ball.vy) / CONFIG.PPM;
+        if (!hasReachedApex) {
+          currentHeight = Math.max(currentHeight, ballStartY - ball.y);
+
+          if (ballStartY - ball.y < currentHeight) {
+            hasReachedApex = true;
+          }
+        }
+        const speed = pxToMeters(Math.hypot(ball.vx, ball.vy));
 
         const formulaRange = calculateRange(
           launchSnapshot.speed,
@@ -320,27 +330,18 @@ function PhysicsCanvas({
           launchSnapshot.gravity,
         );
 
-        const range = Math.min(
-          (ball.x - ballStartX) / CONFIG.PPM,
-          formulaRange,
-        );
+        const range = Math.min(pxToMeters(ball.x - ballStartX), formulaRange);
 
-        if (!hasReachedApex) {
-          currentHeight = Math.max(currentHeight, ballStartY - ball.y);
-
-          if (ballStartY - ball.y < currentHeight) {
-            hasReachedApex = true;
-          }
-        }
+        const maxHeight = !hasReachedApex
+          ? pxToMeters(currentHeight)
+          : formulaMaxHeight;
 
         if (p.millis() - lastStatsTime > 100) {
           lastStatsTime = p.millis();
           setStatsRef.current({
+            maxHeight,
             range,
             speed,
-            maxHeight: !hasReachedApex
-              ? currentHeight / CONFIG.PPM
-              : formulaMaxHeight,
             airTime,
           });
         }
