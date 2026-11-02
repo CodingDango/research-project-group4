@@ -14,7 +14,7 @@ function App() {
     bounciness: 0.8,
     friction: 0.8,
     isPaused: false,
-    mode: "sandbox",
+    mode: "coordinate",
     resetCount: 0,
   });
 

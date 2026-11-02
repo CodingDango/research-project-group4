@@ -21,6 +21,8 @@ const CONFIG = {
     ballBorder: "#FFFFFF",
     apexLineColor: "#ffa850",
     trajectoryColor: "#f33e54",
+    sandboxTextColor: "oklch(0.2077 0.0398 265.7549)",
+    coordinateTextColor: "#FFFFFF",
   },
 };
 
@@ -92,6 +94,9 @@ function PhysicsCanvas({
       let airTime = 0;
 
       let launchSnapshot = createLaunchSnapshot();
+      let textColorToUse = "";
+
+      updateThemeColors();
 
       p.randomSeed(CONFIG.CLOUD_SEED);
 
@@ -121,6 +126,7 @@ function PhysicsCanvas({
 
         const cameraX = setupCamera();
 
+        updateThemeColors();
         drawWorld(cameraX);
         drawTrail();
         drawAimingTrajectory(dt);
@@ -252,6 +258,14 @@ function PhysicsCanvas({
         return cameraX;
       }
 
+      // change colors when uh mode changes.
+      function updateThemeColors() {
+        textColorToUse =
+          stateRef.current.mode == "coordinate"
+            ? CONFIG.COLORS.coordinateTextColor
+            : CONFIG.COLORS.sandboxTextColor;
+      }
+
       function drawWorld(cameraX: number) {
         const mode: PhysicsStateMode = isFiring
           ? launchSnapshot.mode
@@ -303,7 +317,7 @@ function PhysicsCanvas({
         p.stroke(CONFIG.COLORS.apexLineColor);
         p.strokeWeight(2);
 
-        for (let y = ballStartY; y > apexY; y -= 12) {
+        for (let y = ballStartY + CONFIG.BALL_RADIUS / 2; y > apexY; y -= 12) {
           p.line(apexX, y, apexX, Math.max(apexY + 3, y - 6));
         }
 
@@ -311,7 +325,7 @@ function PhysicsCanvas({
         p.noStroke();
         p.circle(apexX, apexY + 3, 6);
 
-        p.fill("#0f172a");
+        p.fill(textColorToUse);
         p.textSize(12);
         p.textAlign(p.CENTER, p.CENTER);
         p.text(`h = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 12);
@@ -333,21 +347,29 @@ function PhysicsCanvas({
         // 1. Dark chalkboard / blueprint background
         p.background("#0b0f19");
 
-        const gridStepMeters = 10; // Grid line every 10 meters
+        const gridStepMeters = 15; // Grid line every 10 meters
         const gridStepPx = metersToPx(gridStepMeters);
 
         // 2. Faint Grid Lines
-        p.stroke("#1e293b"); // subtle dark slate
+        p.stroke("#1e293b");
         p.strokeWeight(1);
 
         // Vertical grid lines across the visible camera view
         const startX = Math.floor(cameraX / gridStepPx) * gridStepPx;
-        for (let x = startX; x < cameraX + virtualW + 100; x += gridStepPx) {
+        for (
+          let x = startX + CONFIG.BALL_RADIUS / 2;
+          x < cameraX + virtualW + 100;
+          x += gridStepPx
+        ) {
           p.line(x, -500, x, CONFIG.GROUND_Y + 500);
         }
 
         // Horizontal grid lines from ground upward
-        for (let y = ballStartY; y > -500; y -= gridStepPx) {
+        for (
+          let y = ballStartY + CONFIG.BALL_RADIUS / 2;
+          y > -500;
+          y -= gridStepPx
+        ) {
           p.line(cameraX, y, cameraX + virtualW, y);
         }
 
@@ -356,10 +378,20 @@ function PhysicsCanvas({
         p.strokeWeight(2);
 
         // X-Axis (The Ground line)
-        p.line(cameraX, ballStartY, cameraX + virtualW, ballStartY);
+        p.line(
+          cameraX,
+          ballStartY + CONFIG.BALL_RADIUS / 2,
+          cameraX + virtualW,
+          ballStartY + CONFIG.BALL_RADIUS / 2,
+        );
 
         // Y-Axis (Vertical line passing right through the launch point)
-        p.line(ballStartX, -500, ballStartX, ballStartY);
+        p.line(
+          ballStartX - CONFIG.BALL_RADIUS / 2,
+          -500,
+          ballStartX - CONFIG.BALL_RADIUS / 2,
+          1000,
+        );
 
         // Origin dot (0, 0)
         p.fill("#38bdf8");
@@ -406,6 +438,7 @@ function PhysicsCanvas({
       function drawHUD() {
         p.fill(0);
         p.noStroke();
+        p.fill(textColorToUse);
         p.textSize(16);
         p.text(`${p.frameRate().toFixed(0)} FPS`, 10, 25);
       }
