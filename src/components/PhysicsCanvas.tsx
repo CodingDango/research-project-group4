@@ -166,7 +166,7 @@ function PhysicsCanvas({
             airTime = 0;
           }
 
-          // if coordinate dont bounce
+          // if coordinate then don't bounce
           if (launchSnapshot.mode == "coordinate") {
             ball.vx = 0;
             ball.vy = 0;
