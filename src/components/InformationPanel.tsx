@@ -3,13 +3,13 @@ import { Card } from "./ui/card";
 
 const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {/* Distance / Range */}
       <Card className="rounded-xl p-4 text-center gap-1">
         <span className="block text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Range
         </span>
-        <span className="text-base sm:text-lg font-mono font-bold text-emerald-400">
+        <span className="text-base sm:text-lg font-mono font-bold text-primary">
           {stats.range.toFixed(2)}{" "}
           <span className="text-xs text-muted-foreground font-normal">m</span>
         </span>
@@ -20,7 +20,7 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
         <span className="block text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Max Height
         </span>
-        <span className="text-base sm:text-lg font-mono font-bold text-sky-400">
+        <span className="text-base sm:text-lg font-mono font-bold text-[#3ef3dc]">
           {stats.maxHeight.toFixed(2)}{" "}
           <span className="text-xs text-muted-foreground font-normal">m</span>
         </span>
@@ -31,7 +31,7 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
         <span className="block text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Air Time
         </span>
-        <span className="text-base sm:text-lg font-mono font-bold text-amber-400">
+        <span className="text-base sm:text-lg font-mono font-bold text-[#823ef3]">
           {stats.airTime.toFixed(2)}{" "}
           <span className="text-xs text-muted-foreground font-normal">s</span>
         </span>
@@ -42,7 +42,7 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
         <span className="block text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Speed
         </span>
-        <span className="text-base sm:text-lg font-mono font-bold text-rose-400">
+        <span className="text-base sm:text-lg font-mono font-bold text-[#f33e54]">
           {(stats.speed > 0.5 ? stats.speed : 0).toFixed(2)}{" "}
           <span className="text-xs text-muted-foreground font-normal">m/s</span>
         </span>

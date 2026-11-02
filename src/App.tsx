@@ -30,8 +30,8 @@ function App() {
   };
 
   return (
-    <div className="bg-background text-foreground min-h-screen max-w-4xl p-4 sm:p-6 mx-auto">
-      <div className="mt-6 flex flex-col gap-6">
+    <div className="bg-background text-foreground min-h-screen max-w-4xl p-4 my-12 sm:p-6 mx-auto">
+      <div className="flex flex-col gap-6">
         <CanvasStage physicsState={physicsState} setPhysicsState={setState} setStats={setPhysicsStats}/>
         <InformationPanel stats={physicsStats}/>
         <ControlPanel physicsState={physicsState} setPhysicsState={setState} />

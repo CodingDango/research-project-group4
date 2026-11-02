@@ -3,7 +3,11 @@ import { Card, CardContent } from "./ui/card";
 import SliderField from "./SliderField";
 import NumberInput from "./NumberInput";
 import AppSelect from "./AppSelect";
-import type { PhysicsState, PhysicsStateSetter } from "@/types/types";
+import type {
+  PhysicsState,
+  PhysicsStateMode,
+  PhysicsStateSetter,
+} from "@/types/types";
 
 const ControlPanel = ({
   physicsState,
@@ -25,8 +29,8 @@ const ControlPanel = ({
                 This is where you do stuff
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              <div className="flex flex-col gap-6">
+            <div className="grid-flow-col grid grid-cols-1 sm:grid-cols-2 grid-rows-2 gap-8">
+              
                 <SliderField
                   htmlFor="speed"
                   labelText="Speed:"
@@ -46,19 +50,26 @@ const ControlPanel = ({
                   physicsState={physicsState}
                   setState={setPhysicsState}
                 />
-              </div>
 
-              <div className="flex items-start">
-                <div className="w-full">
-                  <Label className="w-24 inline-block">Gravity:</Label>
-                  <NumberInput
-                    min={0}
-                    max={100}
-                    value={physicsState["gravity"]}
-                    key={"gravity"}
-                    onChange={(v) => setPhysicsState("gravity", v)}
-                  />
-                </div>
+              <div className="w-full">
+                <Label className="w-24 inline-block">Gravity:</Label>
+                <NumberInput
+                  min={0}
+                  max={100}
+                  value={physicsState["gravity"]}
+                  key={"gravity"}
+                  onChange={(v) => setPhysicsState("gravity", v)}
+                />
+              </div>
+              <div className="w-full">
+                <Label className="w-24 inline-block">Initial Height:</Label>
+                <NumberInput
+                  min={0}
+                  max={100}
+                  value={0}
+                  key={"gravity"}
+                  onChange={(v) => setPhysicsState("gravity", v)}
+                />
               </div>
             </div>
           </div>
@@ -74,6 +85,9 @@ const ControlPanel = ({
                   ]}
                   label="Select Mode"
                   defaultValue={physicsState["mode"]}
+                  onChange={(value) =>
+                    setPhysicsState("mode", value as PhysicsStateMode)
+                  }
                 />
               </div>
             </div>

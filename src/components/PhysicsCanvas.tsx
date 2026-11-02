@@ -1,5 +1,9 @@
 import { useEffect, useRef } from "react";
-import type { PhysicsState, PhysicsStatsSetter } from "@/types/types";
+import type {
+  PhysicsState,
+  PhysicsStateMode,
+  PhysicsStatsSetter,
+} from "@/types/types";
 import p5 from "p5";
 
 const CONFIG = {
@@ -10,15 +14,17 @@ const CONFIG = {
   CLOUD_SEED: 6767,
   PPM: 2, // 2 pixels for 1 meter i think
   COLORS: {
-    bg: "#86e6fe",
-    groundLine: "#0ba42d",
-    groundFill: "#8e3c2e",
-    ball: "#FF5050",
+    sandboxBg: "#86e6fe",
+    sandboxGroundLine: "#0ba42d",
+    sandboxGroundFill: "#8e3c2e",
+    ball: "#f33e54",
     ballBorder: "#FFFFFF",
     apexLineColor: "#ffa850",
+    trajectoryColor: "#f33e54",
   },
 };
 
+// TODO: Put math helpers in a separate file
 function degToRad(angle: number) {
   return (angle * Math.PI) / 180;
 }
@@ -70,13 +76,13 @@ function PhysicsCanvas({
         vy: 0,
       };
 
+      let virtualW = 800;
+      let scale = 1;
+
       let isFiring = false;
       let hasLaunched = false;
       let hasReachedApex = false;
       let lastResetCount = stateRef.current.resetCount;
-
-      let virtualW = 800;
-      let scale = 1;
 
       let nextCloudX = 0;
       let trail: { x: number; y: number }[] = [];
@@ -85,11 +91,7 @@ function PhysicsCanvas({
       let currentHeight = 0;
       let airTime = 0;
 
-      let launchSnapshot = {
-        speed: stateRef.current.speed,
-        angle: stateRef.current.angle,
-        gravity: stateRef.current.gravity,
-      };
+      let launchSnapshot = createLaunchSnapshot();
 
       p.randomSeed(CONFIG.CLOUD_SEED);
 
@@ -119,8 +121,7 @@ function PhysicsCanvas({
 
         const cameraX = setupCamera();
 
-        drawBackground(cameraX);
-        drawGround(cameraX);
+        drawWorld(cameraX);
         drawTrail();
         drawAimingTrajectory(dt);
         drawApexIndicator();
@@ -152,18 +153,21 @@ function PhysicsCanvas({
         trail.push({ x: ball.x, y: ball.y });
 
         if (ball.y >= ballStartY) {
-          ball.vy = -ball.vy * bounciness;
-          ball.vx *= friction;
-          airTime = 0;
+          // sandbox mode do a bounce
+          if (launchSnapshot.mode == "sandbox") {
+            ball.vy = -ball.vy * bounciness;
+            ball.vx *= friction;
+            airTime = 0;
+          }
+
+          // if coordinate dont bounce
+          if (launchSnapshot.mode == "coordinate") {
+            ball.vx = 0;
+            ball.vy = 0;
+            ball.y = ballStartY;
+            isFiring = false;
+          }
         }
-      }
-
-      function updateDimensions() {
-        const { w, h, targetViewportW } = getResponsiveSettings();
-        virtualW = targetViewportW;
-        scale = w / virtualW;
-
-        return { w, h };
       }
 
       function drawAimingTrajectory(dt: number) {
@@ -176,7 +180,7 @@ function PhysicsCanvas({
         let ghostVy = metersToPx(-launch.speed * p.sin(launch.angle));
 
         p.noFill();
-        p.stroke(255, 80, 80, 100);
+        p.stroke(`${CONFIG.COLORS.ball}40`);
         p.strokeWeight(3);
 
         p.beginShape();
@@ -208,11 +212,7 @@ function PhysicsCanvas({
         ball.vy = metersToPx(-speed * p.sin(angle));
         isFiring = true;
         hasLaunched = true;
-        launchSnapshot = {
-          speed: stateRef.current.speed,
-          angle: stateRef.current.angle,
-          gravity: stateRef.current.gravity,
-        };
+        launchSnapshot = createLaunchSnapshot();
       }
 
       function handleReset() {
@@ -226,6 +226,8 @@ function PhysicsCanvas({
       function resetBall() {
         ball.x = ballStartX;
         ball.y = ballStartY;
+        ball.vx = 0;
+        ball.vy = 0;
         trail = [];
         isFiring = false;
         hasLaunched = false;
@@ -250,8 +252,22 @@ function PhysicsCanvas({
         return cameraX;
       }
 
+      function drawWorld(cameraX: number) {
+        const mode: PhysicsStateMode = isFiring
+          ? launchSnapshot.mode
+          : stateRef.current.mode;
+
+        if (mode == "coordinate") {
+          drawCoordinateGrid(cameraX);
+          return;
+        }
+
+        drawBackground(cameraX);
+        drawGround(cameraX);
+      }
+
       function drawBackground(cameraX: number) {
-        p.background(CONFIG.COLORS.bg);
+        p.background(CONFIG.COLORS.sandboxBg);
 
         while (nextCloudX < cameraX + virtualW + 300) {
           clouds.push({ x: nextCloudX, y: p.random(-20, 20) });
@@ -303,14 +319,52 @@ function PhysicsCanvas({
 
       function drawGround(cameraX: number) {
         // Outline
-        p.stroke(CONFIG.COLORS.groundLine);
+        p.stroke(CONFIG.COLORS.sandboxGroundLine);
         p.strokeWeight(6);
         p.line(0, CONFIG.GROUND_Y, 999999, CONFIG.GROUND_Y);
 
         // Earth body
-        p.fill(CONFIG.COLORS.groundFill);
+        p.fill(CONFIG.COLORS.sandboxGroundFill);
         p.noStroke();
         p.rect(cameraX, CONFIG.GROUND_Y + 2, virtualW, 300);
+      }
+
+      function drawCoordinateGrid(cameraX: number) {
+        // 1. Dark chalkboard / blueprint background
+        p.background("#0b0f19");
+
+        const gridStepMeters = 10; // Grid line every 10 meters
+        const gridStepPx = metersToPx(gridStepMeters);
+
+        // 2. Faint Grid Lines
+        p.stroke("#1e293b"); // subtle dark slate
+        p.strokeWeight(1);
+
+        // Vertical grid lines across the visible camera view
+        const startX = Math.floor(cameraX / gridStepPx) * gridStepPx;
+        for (let x = startX; x < cameraX + virtualW + 100; x += gridStepPx) {
+          p.line(x, -500, x, CONFIG.GROUND_Y + 500);
+        }
+
+        // Horizontal grid lines from ground upward
+        for (let y = ballStartY; y > -500; y -= gridStepPx) {
+          p.line(cameraX, y, cameraX + virtualW, y);
+        }
+
+        // 3. The Main Axes (X-axis and Y-axis) - brighter and thicker
+        p.stroke("#475569");
+        p.strokeWeight(2);
+
+        // X-Axis (The Ground line)
+        p.line(cameraX, ballStartY, cameraX + virtualW, ballStartY);
+
+        // Y-Axis (Vertical line passing right through the launch point)
+        p.line(ballStartX, -500, ballStartX, ballStartY);
+
+        // Origin dot (0, 0)
+        p.fill("#38bdf8");
+        p.noStroke();
+        p.circle(ballStartX, ballStartY, 6);
       }
 
       function drawTrail() {
@@ -394,6 +448,7 @@ function PhysicsCanvas({
           });
         }
       }
+
       function drawArrow(
         x1: number,
         y1: number,
@@ -433,6 +488,23 @@ function PhysicsCanvas({
           h: Math.round(w / aspect),
           targetViewportW,
         };
+      }
+
+      function createLaunchSnapshot() {
+        return {
+          speed: stateRef.current.speed,
+          angle: stateRef.current.angle,
+          gravity: stateRef.current.gravity,
+          mode: stateRef.current.mode,
+        };
+      }
+
+      function updateDimensions() {
+        const { w, h, targetViewportW } = getResponsiveSettings();
+        virtualW = targetViewportW;
+        scale = w / virtualW;
+
+        return { w, h };
       }
     };
 

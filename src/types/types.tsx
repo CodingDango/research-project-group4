@@ -20,7 +20,7 @@ export type PhysicsStatsSetter = React.Dispatch<React.SetStateAction<PhysicsStat
 
 export type PhysicsStateSetter = (
   key: keyof PhysicsState,
-  value: number | boolean,
+  value: number | boolean | PhysicsStateMode,
 ) => void;
 
 export type PhysicsStateMode = "sandbox" | "coordinate";

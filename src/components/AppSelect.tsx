@@ -23,7 +23,7 @@ export default function AppSelect({
   items: AppSelectItem[];
   label: string;
   defaultValue?: string;
-  onChange?: (value: string | undefined) => void; // 1. This lets the parent know what was picked
+  onChange?: (value: string | undefined) => void; 
 }) {
   const findItem = (value: string | undefined) =>
     items.find((item) => item?.value == value);
