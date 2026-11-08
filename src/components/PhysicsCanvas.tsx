@@ -12,14 +12,20 @@ const CONFIG = {
   BALL_RADIUS: 20,
   SIM_SPEED: 4,
   CLOUD_SEED: 6767,
+  RANGE_LINE_OFFSET: 25,
   PPM: 2, // 2 pixels for 1 meter i think
+  DASH_LENGTH: 6,
+  DASH_GAP: 4,
   COLORS: {
     sandboxBg: "#86e6fe",
     sandboxGroundLine: "#0ba42d",
     sandboxGroundFill: "#8e3c2e",
     ball: "#f33e54",
     ballBorder: "#FFFFFF",
-    apexLineColor: "#ffa850",
+    apexLineColorSandbox: "#ffa850",
+    apexLineColorCoords: "#a1b5cf",
+    rangeLineColor: "#ffa850",
+    rangeLineColorCoords: "#a1b5cf",
     trajectoryColor: "#f33e54",
     sandboxTextColor: "oklch(0.2077 0.0398 265.7549)",
     coordinateTextColor: "#FFFFFF",
@@ -85,6 +91,7 @@ function PhysicsCanvas({
       let hasLaunched = false;
       let hasReachedApex = false;
       let lastResetCount = stateRef.current.resetCount;
+      let hasBounced = false;
 
       let nextCloudX = 0;
       let trail: { x: number; y: number }[] = [];
@@ -131,6 +138,7 @@ function PhysicsCanvas({
         drawTrail();
         drawAimingTrajectory(dt);
         drawApexIndicator();
+        drawRangeIndicator();
         drawBall();
 
         p.pop();
@@ -152,18 +160,22 @@ function PhysicsCanvas({
 
         if (!isFiring || isPaused) return;
 
-        airTime += dt / CONFIG.SIM_SPEED;
+        if (!hasBounced) {
+          airTime += dt / CONFIG.SIM_SPEED;
+        }
+
         ball.vy += convertedGravity * dt;
         ball.x += ball.vx * dt;
         ball.y = Math.min(ballStartY, ball.y + ball.vy * dt);
         trail.push({ x: ball.x, y: ball.y });
 
         if (ball.y >= ballStartY) {
+          hasBounced = true;
+
           // sandbox mode do a bounce
           if (launchSnapshot.mode == "sandbox") {
             ball.vy = -ball.vy * bounciness;
             ball.vx *= friction;
-            airTime = 0;
           }
 
           // if coordinate then don't bounce
@@ -238,6 +250,7 @@ function PhysicsCanvas({
         isFiring = false;
         hasLaunched = false;
         hasReachedApex = false;
+        hasBounced = false;
         p.randomSeed(CONFIG.CLOUD_SEED);
         clouds = [];
         nextCloudX = 0;
@@ -297,6 +310,43 @@ function PhysicsCanvas({
         }
       }
 
+      function drawRangeIndicator() {
+        const launch = hasLaunched ? launchSnapshot : stateRef.current;
+        const range = calculateRange(
+          launch.speed,
+          launch.angle,
+          launch.gravity,
+        );
+        if (range <= 0) return;
+
+        const startX = ballStartX;
+        const endX = ballStartX + metersToPx(range);
+        const y = CONFIG.GROUND_Y + CONFIG.RANGE_LINE_OFFSET;
+        const tick = 6;
+
+        const rangeColor =
+          launch.mode == "sandbox"
+            ? CONFIG.COLORS.rangeLineColor
+            : CONFIG.COLORS.rangeLineColorCoords;
+
+        p.stroke(rangeColor);
+        p.strokeWeight(2);
+
+        // Horizontal span
+        drawDashedLine(startX, y, endX, y);
+
+        // End caps
+        p.line(startX, y - tick, startX, y + tick);
+        p.line(endX, y - tick, endX, y + tick);
+
+        // Label centered under the span
+        p.noStroke();
+        p.fill(rangeColor);
+        p.textSize(12);
+        p.textAlign(p.CENTER, p.TOP);
+        p.text(`R = ${range.toFixed(2)} m`, (startX + endX) / 2, y + tick + 4);
+      }
+
       function drawApexIndicator() {
         const launch = hasLaunched ? launchSnapshot : stateRef.current;
 
@@ -314,21 +364,29 @@ function PhysicsCanvas({
         const apexX = ballStartX + metersToPx(formulaRange / 2);
         const apexY = ballStartY - metersToPx(formulaMaxHeight);
 
-        p.stroke(CONFIG.COLORS.apexLineColor);
+        const apexColor =
+          launch.mode == "sandbox"
+            ? CONFIG.COLORS.apexLineColorSandbox
+            : CONFIG.COLORS.apexLineColorCoords;
+
+        p.stroke(apexColor);
         p.strokeWeight(2);
 
-        for (let y = ballStartY + CONFIG.BALL_RADIUS / 2; y > apexY; y -= 12) {
-          p.line(apexX, y, apexX, Math.max(apexY + 3, y - 6));
-        }
+        drawDashedLine(
+          apexX,
+          ballStartY + CONFIG.BALL_RADIUS / 2,
+          apexX,
+          apexY + CONFIG.BALL_RADIUS / 2,
+        );
 
-        p.fill(CONFIG.COLORS.apexLineColor);
+        p.fill(apexColor);
         p.noStroke();
         p.circle(apexX, apexY + 3, 6);
 
-        p.fill(textColorToUse);
+        p.fill(apexColor);
         p.textSize(12);
         p.textAlign(p.CENTER, p.CENTER);
-        p.text(`h = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 12);
+        p.text(`Hmax = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 12);
       }
 
       function drawGround(cameraX: number) {
@@ -364,7 +422,6 @@ function PhysicsCanvas({
           p.line(x, -500, x, CONFIG.GROUND_Y + 500);
         }
 
-        // Horizontal grid lines from ground upward
         for (
           let y = ballStartY + CONFIG.BALL_RADIUS / 2;
           y > -500;
@@ -373,7 +430,6 @@ function PhysicsCanvas({
           p.line(cameraX, y, cameraX + virtualW, y);
         }
 
-        // 3. The Main Axes (X-axis and Y-axis) - brighter and thicker
         p.stroke("#475569");
         p.strokeWeight(2);
 
@@ -392,11 +448,6 @@ function PhysicsCanvas({
           ballStartX - CONFIG.BALL_RADIUS / 2,
           1000,
         );
-
-        // Origin dot (0, 0)
-        p.fill("#38bdf8");
-        p.noStroke();
-        p.circle(ballStartX, ballStartY, 6);
       }
 
       function drawTrail() {
@@ -538,6 +589,19 @@ function PhysicsCanvas({
         scale = w / virtualW;
 
         return { w, h };
+      }
+
+      function drawDashedLine(x1: number, y1: number, x2: number, y2: number) {
+        const len = Math.hypot(x2 - x1, y2 - y1);
+        if (len === 0) return;
+
+        const ux = (x2 - x1) / len;
+        const uy = (y2 - y1) / len;
+
+        for (let d = 0; d < len; d += CONFIG.DASH_LENGTH + CONFIG.DASH_GAP) {
+          const end = Math.min(d + CONFIG.DASH_LENGTH, len);
+          p.line(x1 + ux * d, y1 + uy * d, x1 + ux * end, y1 + uy * end);
+        }
       }
     };
 
