@@ -10,7 +10,7 @@ const CONFIG = {
   ASPECT: 800 / 500,
   GROUND_Y: 350,
   BALL_RADIUS: 20,
-  SIM_SPEED: 4,
+  SIM_SPEED: 1.5,
   CLOUD_SEED: 6767,
   RANGE_LINE_OFFSET: 25,
   PPM: 2, // 2 pixels for 1 meter i think
@@ -91,14 +91,14 @@ function PhysicsCanvas({
       let hasLaunched = false;
       let hasReachedApex = false;
       let lastResetCount = stateRef.current.resetCount;
-      let hasBounced = false;
 
       let nextCloudX = 0;
       let trail: { x: number; y: number }[] = [];
       let clouds: { x: number; y: number }[] = [];
       let lastStatsTime = 0;
       let currentHeight = 0;
-      let airTime = 0;
+      let simTime = 0; // Our master time tracker in seconds
+      let totalFlightTime = 0; // When it hits the ground in seconds
 
       let launchSnapshot = createLaunchSnapshot();
       let textColorToUse = "";
@@ -155,79 +155,77 @@ function PhysicsCanvas({
       };
 
       function updatePhysics(dt: number) {
-        const { bounciness, friction, isPaused } = stateRef.current;
-        const convertedGravity = metersToPx(launchSnapshot.gravity);
+        const { isPaused } = stateRef.current;
 
         if (!isFiring || isPaused) return;
 
-        if (!hasBounced) {
-          airTime += dt / CONFIG.SIM_SPEED;
+        simTime += dt * CONFIG.SIM_SPEED;
+
+        if (simTime >= totalFlightTime) {
+          simTime = totalFlightTime;
+          isFiring = false;
+          isFiring = false;
         }
 
-        ball.vy += convertedGravity * dt;
-        ball.x += ball.vx * dt;
-        ball.y = Math.min(ballStartY, ball.y + ball.vy * dt);
+        const physics = getPhysicsAtTime(
+          simTime,
+          launchSnapshot.speed,
+          launchSnapshot.angle,
+          launchSnapshot.gravity,
+        );
+
+        // Convert Physics (meters, Y-up) to Canvas (pixels, Y-down)
+        ball.x = ballStartX + metersToPx(physics.x);
+        ball.y = ballStartY - metersToPx(physics.y);
+        ball.vx = metersToPx(physics.vx);
+        ball.vy = metersToPx(-physics.vy); // Negative because canvas Y goes down!
+
         trail.push({ x: ball.x, y: ball.y });
-
-        if (ball.y >= ballStartY) {
-          hasBounced = true;
-
-          // sandbox mode do a bounce
-          if (launchSnapshot.mode == "sandbox") {
-            ball.vy = -ball.vy * bounciness;
-            ball.vx *= friction;
-          }
-
-          // if coordinate then don't bounce
-          if (launchSnapshot.mode == "coordinate") {
-            ball.vx = 0;
-            ball.vy = 0;
-            ball.y = ballStartY;
-            isFiring = false;
-          }
-        }
       }
 
-      function drawAimingTrajectory(dt: number) {
+      function drawAimingTrajectory() {
         const launch = hasLaunched ? launchSnapshot : stateRef.current;
-        const convertedGravity = metersToPx(launch.gravity);
+        const { speed, angle, gravity } = launch;
 
-        let ghostX = ballStartX;
-        let ghostY = ballStartY;
-        let ghostVx = metersToPx(launch.speed * p.cos(launch.angle));
-        let ghostVy = metersToPx(-launch.speed * p.sin(launch.angle));
+        if (gravity <= 0 || speed <= 0) return;
+
+        // 1. Calculate total duration for the arc
+        const rad = degToRad(angle);
+        const v0y = speed * Math.sin(rad);
+        const flightDuration = (2 * v0y) / gravity;
+
+        if (flightDuration <= 0) return;
 
         p.noFill();
         p.stroke(`${CONFIG.COLORS.ball}40`);
         p.strokeWeight(3);
 
+        // 2. Sample 60 smooth points from t = 0 to t = flightDuration
+        const STEPS = 60;
+
         p.beginShape();
-        for (let step = 0; step < 300; step++) {
-          p.vertex(ghostX, ghostY);
-          const prevX = ghostX;
-          const prevY = ghostY;
+        for (let i = 0; i <= STEPS; i++) {
+          const t = (i / STEPS) * flightDuration;
 
-          ghostVy += convertedGravity * dt;
-          ghostX += ghostVx * dt;
-          ghostY += ghostVy * dt;
+          // Exact position in meters
+          const pos = getPhysicsAtTime(t, speed, angle, gravity);
 
-          // When it crosses the ground:
-          if (ghostY >= ballStartY) {
-            // Find the exact slice where it hits the ground (no kink!)
-            const fraction = (ballStartY - prevY) / (ghostY - prevY);
-            const exactLandingX = prevX + (ghostX - prevX) * fraction;
+          // Convert to canvas pixels
+          const px = ballStartX + metersToPx(pos.x);
+          const py = ballStartY - metersToPx(pos.y);
 
-            p.vertex(exactLandingX, ballStartY);
-            break;
-          }
+          p.vertex(px, py);
         }
         p.endShape();
       }
 
       function fireBall() {
-        const { speed, angle } = stateRef.current;
-        ball.vx = metersToPx(speed * p.cos(angle));
-        ball.vy = metersToPx(-speed * p.sin(angle));
+        const { speed, angle, gravity } = stateRef.current;
+        const rad = degToRad(angle);
+        const v0y = speed * Math.sin(rad);
+
+        totalFlightTime = gravity > 0 ? (2 * v0y) / gravity : 0;
+        simTime = 0;
         isFiring = true;
         hasLaunched = true;
         launchSnapshot = createLaunchSnapshot();
@@ -250,12 +248,12 @@ function PhysicsCanvas({
         isFiring = false;
         hasLaunched = false;
         hasReachedApex = false;
-        hasBounced = false;
         p.randomSeed(CONFIG.CLOUD_SEED);
         clouds = [];
         nextCloudX = 0;
         currentHeight = 0;
-        airTime = 0;
+        totalFlightTime = 0;
+        simTime = 0;
       }
 
       function setupCamera() {
@@ -344,7 +342,7 @@ function PhysicsCanvas({
         p.fill(rangeColor);
         p.textSize(12);
         p.textAlign(p.CENTER, p.TOP);
-        p.text(`R = ${range.toFixed(2)} m`, (startX + endX) / 2, y + tick + 4);
+        p.text(`range = ${range.toFixed(2)} m`, (startX + endX) / 2, y + tick + 4);
       }
 
       function drawApexIndicator() {
@@ -386,7 +384,11 @@ function PhysicsCanvas({
         p.fill(apexColor);
         p.textSize(12);
         p.textAlign(p.CENTER, p.CENTER);
-        p.text(`max height = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 12);
+        p.text(
+          `max height = ${formulaMaxHeight.toFixed(2)} m`,
+          apexX,
+          apexY - 12,
+        );
       }
 
       function drawGround(cameraX: number) {
@@ -505,7 +507,8 @@ function PhysicsCanvas({
 
         const values = isFiring ? launchSnapshot : stateRef.current;
 
-        const velocity = pxToMeters(Math.hypot(ball.vx, ball.vy)) * Math.sign(-ball.vy);
+        const velocity =
+          pxToMeters(Math.hypot(ball.vx, ball.vy)) * Math.sign(-ball.vy);
 
         const formulaRange = calculateRange(
           values.speed,
@@ -518,6 +521,8 @@ function PhysicsCanvas({
           values.angle,
           values.gravity,
         );
+
+        const airTime = values.gravity > 0 ? (2 * values.speed * p.sin(values.angle)) / values.gravity : 0;
 
         if (p.millis() - lastStatsTime > 100) {
           lastStatsTime = p.millis();
@@ -599,6 +604,24 @@ function PhysicsCanvas({
           const end = Math.min(d + CONFIG.DASH_LENGTH, len);
           p.line(x1 + ux * d, y1 + uy * d, x1 + ux * end, y1 + uy * end);
         }
+      }
+      function getPhysicsAtTime(
+        t: number,
+        v0: number,
+        angleDeg: number,
+        g = 9.81,
+      ) {
+        const rad = degToRad(angleDeg);
+        const v0x = v0 * Math.cos(rad);
+        const v0y = v0 * Math.sin(rad);
+
+        const x = v0x * t;
+        const y = Math.max(0, v0y * t - 0.5 * g * t * t);
+
+        const vx = v0x;
+        const vy = v0y - g * t;
+
+        return { x, y, vx, vy };
       }
     };
 
