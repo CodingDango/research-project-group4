@@ -53,12 +53,12 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
       {/* Velocity */}
       <Card className="rounded-xl p-4 text-center gap-1">
         <span className="block text-xs font-medium text-muted-foreground uppercase ">
-          Speed
+          Velocity
         </span>
         <span
           className={`text-base sm:text-lg font-mono ${colors.velocity}`}
         >
-          {(stats.speed > 0.5 ? stats.speed : 0).toFixed(2)}{" "}
+          {stats.velocity.toFixed(2)}{" "}
           <span className="text-sm  text-muted-foreground font-normal">
             m/s
           </span>

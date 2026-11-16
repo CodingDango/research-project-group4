@@ -13,7 +13,7 @@ export interface PhysicsStats {
   range: number;
   maxHeight: number;
   airTime: number;
-  speed: number;
+  velocity: number;
 }
 
 export type PhysicsStatsSetter = React.Dispatch<React.SetStateAction<PhysicsStats>>;

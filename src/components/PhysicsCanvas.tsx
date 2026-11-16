@@ -124,8 +124,8 @@ function PhysicsCanvas({
         handleReset();
 
         if (!stateRef.current.isPaused) {
-          updateStats();
           updatePhysics(dt);
+          updateStats();
         }
 
         p.clear();
@@ -386,7 +386,7 @@ function PhysicsCanvas({
         p.fill(apexColor);
         p.textSize(12);
         p.textAlign(p.CENTER, p.CENTER);
-        p.text(`Hmax = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 12);
+        p.text(`max height = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 12);
       }
 
       function drawGround(cameraX: number) {
@@ -462,7 +462,7 @@ function PhysicsCanvas({
       }
 
       function drawBall() {
-        // Velocity vector arrow
+        // speed vector arrow
         const velocityArrowDx = !hasLaunched
           ? metersToPx(stateRef.current.speed * p.cos(stateRef.current.angle))
           : ball.vx;
@@ -502,32 +502,29 @@ function PhysicsCanvas({
             hasReachedApex = true;
           }
         }
-        const speed = pxToMeters(Math.hypot(ball.vx, ball.vy));
+
+        const values = isFiring ? launchSnapshot : stateRef.current;
+
+        const velocity = pxToMeters(Math.hypot(ball.vx, ball.vy)) * Math.sign(-ball.vy);
 
         const formulaRange = calculateRange(
-          launchSnapshot.speed,
-          launchSnapshot.angle,
-          launchSnapshot.gravity,
+          values.speed,
+          values.angle,
+          values.gravity,
         );
 
         const formulaMaxHeight = calculateMaxHeight(
-          launchSnapshot.speed,
-          launchSnapshot.angle,
-          launchSnapshot.gravity,
+          values.speed,
+          values.angle,
+          values.gravity,
         );
-
-        const range = Math.min(pxToMeters(ball.x - ballStartX), formulaRange);
-
-        const maxHeight = !hasReachedApex
-          ? pxToMeters(currentHeight)
-          : formulaMaxHeight;
 
         if (p.millis() - lastStatsTime > 100) {
           lastStatsTime = p.millis();
           setStatsRef.current({
-            maxHeight,
-            range,
-            speed,
+            maxHeight: formulaMaxHeight,
+            range: formulaRange,
+            velocity,
             airTime,
           });
         }

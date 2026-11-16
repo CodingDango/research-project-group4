@@ -1,0 +1,101 @@
+import { Label } from "./ui/label";
+import { Card, CardContent } from "./ui/card";
+import SliderField from "./SliderField";
+import NumberInput from "./NumberInput";
+import AppSelect from "./AppSelect";
+import type {
+  PhysicsState,
+  PhysicsStateMode,
+  PhysicsStateSetter,
+} from "@/types/types";
+
+const VariablePanel = ({
+  physicsState,
+  setPhysicsState,
+}: {
+  physicsState: PhysicsState;
+  setPhysicsState: PhysicsStateSetter;
+}) => {
+  return (
+    <Card className="h-full">
+      <CardContent>
+        <div className="flex flex-col gap-12">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="font-heading text-base leading-snug font-medium">
+                Variable Panel
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                This is where you edit variables
+              </p>
+            </div>
+            <div className="grid-flow-col grid grid-cols-1 sm:grid-cols-2 grid-rows-2 gap-8">
+              
+                <SliderField
+                  htmlFor="speed"
+                  labelText="Speed:"
+                  max={200}
+                  min={0}
+                  physicsKey="speed"
+                  physicsState={physicsState}
+                  setState={setPhysicsState}
+                />
+
+                <SliderField
+                  htmlFor="launch-angle"
+                  labelText="Launch Angle:"
+                  max={90}
+                  min={0}
+                  physicsKey="angle"
+                  physicsState={physicsState}
+                  setState={setPhysicsState}
+                />
+
+              <div className="w-full">
+                <Label className="w-24 inline-block">Gravity:</Label>
+                <NumberInput
+                  min={0}
+                  max={100}
+                  value={physicsState["gravity"]}
+                  key={"gravity"}
+                  onChange={(v) => setPhysicsState("gravity", v)}
+                />
+              </div>
+              <div className="w-full">
+                <Label className="w-24 inline-block">Initial Height:</Label>
+                <NumberInput
+                  min={0}
+                  max={100}
+                  value={0}
+                  key={"gravity"}
+                  onChange={(v) => setPhysicsState("gravity", v)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <div className="flex flex-col gap-6">
+              <div className="flex gap-4">
+                <Label className="text-nowrap w-28">Select Mode</Label>
+                <AppSelect
+                  items={[
+                    { value: "sandbox", label: "Sandbox" },
+                    { value: "coordinate", label: "Coordinate Plane" },
+                  ]}
+                  label="Select Mode"
+                  defaultValue={physicsState["mode"]}
+                  onChange={(value) =>
+                    setPhysicsState("mode", value as PhysicsStateMode)
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default VariablePanel;
