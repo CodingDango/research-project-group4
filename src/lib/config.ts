@@ -1,0 +1,25 @@
+export const CONFIG = {
+  ASPECT: 800 / 500,
+  GROUND_Y: 350,
+  BALL_RADIUS: 20,
+  SIM_SPEED: 3,
+  CLOUD_SEED: 6767,
+  RANGE_LINE_OFFSET: 25,
+  PPM: 2, // 2 pixels for 1 meter i think
+  DASH_LENGTH: 6,
+  DASH_GAP: 4,
+  COLORS: {
+    sandboxBg: "#86e6fe",
+    sandboxGroundLine: "#0ba42d",
+    sandboxGroundFill: "#8e3c2e",
+    ball: "#f33e54",
+    ballBorder: "#FFFFFF",
+    apexLineColorSandbox: "#ffa850",
+    apexLineColorCoords: "#a1b5cf",
+    rangeLineColor: "#ffa850",
+    rangeLineColorCoords: "#a1b5cf",
+    trajectoryColor: "#f33e54",
+    sandboxTextColor: "oklch(0.2077 0.0398 265.7549)",
+    coordinateTextColor: "#FFFFFF",
+  },
+};

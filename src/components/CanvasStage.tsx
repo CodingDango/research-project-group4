@@ -1,4 +1,4 @@
-import PhysicsCanvas from "./PhysicsCanvas";
+import PhysicsCanvas from "./simulation/PhysicsCanvas";
 
 import type {
   PhysicsState,
