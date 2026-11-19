@@ -16,7 +16,7 @@ export class SimulationScene {
   // Layout & Scaling
   public virtualW = 800;
   public scale = 1;
-  public ballStartX = 50;
+  public ballStartX = 60;
   public ballStartY = CONFIG.GROUND_Y - CONFIG.BALL_RADIUS / 2;
 
   // Physics & Simulation Clock
@@ -26,10 +26,11 @@ export class SimulationScene {
   public hasLaunched = false;
   public hasReachedApex = false;
   public lastResetCount = 0;
+  public lastLaunchCount = 0;
 
   // Ball State
   public ball = {
-    x: 50,
+    x: this.ballStartX,
     y: CONFIG.GROUND_Y - CONFIG.BALL_RADIUS / 2,
     vx: 0,
     vy: 0,
@@ -65,7 +66,13 @@ export class SimulationScene {
     };
   }
 
-  public launch(state: PhysicsState) {
+  public handleLaunch(state: PhysicsState) {
+    if (state.launchCount == this.lastLaunchCount) return;
+    
+    this.lastLaunchCount = state.launchCount;
+    
+    if (this.hasLaunched || state.isPaused) return;
+
     const { speed, angle, gravity } = state;
     this.totalFlightTime = calculateFlightTime(speed, angle, gravity);
     this.simTime = 0;
@@ -92,6 +99,8 @@ export class SimulationScene {
   }
 
   public update(dt: number, state: PhysicsState, setStats: PhysicsStatsSetter) {
+    this.handleLaunch(state);
+
     if (state.resetCount !== this.lastResetCount) {
       this.lastResetCount = state.resetCount;
       this.reset();
@@ -108,9 +117,6 @@ export class SimulationScene {
       this.isFiring = false;
       this.ball.vy = -this.launchSnapshot.speed;
     }
-
-    console.log(`simTime: ${this.simTime}`);
-    console.log(`flightTime: ${this.totalFlightTime}`);
 
     const phys = getPhysicsAtTime(
       this.simTime,
@@ -138,6 +144,7 @@ export class SimulationScene {
     this.drawAimingTrajectory(state);
     this.drawApexIndicator(state);
     this.drawRangeIndicator(state);
+    this.drawFloatingBadge(state);
     this.drawBall(state);
 
     p.pop();
@@ -207,41 +214,39 @@ export class SimulationScene {
     const p = this.p;
     p.background("#0b0f19");
 
-    const gridStepPx = metersToPx(15);
+    const gridStepMeters = CONFIG.GRID_STEP;
+    const gridStepPx = metersToPx(gridStepMeters);
+
+    const originX = this.ballStartX;
+    const originY = this.ballStartY;
+
+    // 1. FAINT GRID LINES
     p.stroke("#1e293b");
     p.strokeWeight(1);
-
-    const startX = Math.floor(cameraX / gridStepPx) * gridStepPx;
-    for (
-      let x = startX + CONFIG.BALL_RADIUS / 2;
-      x < cameraX + this.virtualW + 100;
-      x += gridStepPx
-    ) {
-      p.line(x, -500, x, CONFIG.GROUND_Y + 500);
+    // VERTICAL LINES:
+    // Start 50px behind the camera (or -50m), step forward across the whole screen
+    const startX =
+      originX -
+      Math.ceil((originX - (cameraX - 100)) / gridStepPx) * gridStepPx;
+    for (let x = startX; x < cameraX + this.virtualW + 100; x += gridStepPx) {
+      p.line(x, -1000, x, originY + 200); // extends above and below
     }
 
-    for (
-      let y = this.ballStartY + CONFIG.BALL_RADIUS / 2;
-      y > -500;
-      y -= gridStepPx
-    ) {
-      p.line(cameraX, y, cameraX + this.virtualW, y);
+    // HORIZONTAL LINES:
+    // Start below the ground and go way up into the sky
+    for (let y = originY + gridStepPx * 3; y > -1000; y -= gridStepPx) {
+      p.line(cameraX - 100, y, cameraX + this.virtualW + 100, y);
     }
 
+    // 2. MAIN AXES (X and Y axis lines)
     p.stroke("#475569");
     p.strokeWeight(2);
-    p.line(
-      cameraX,
-      this.ballStartY + CONFIG.BALL_RADIUS / 2,
-      cameraX + this.virtualW,
-      this.ballStartY + CONFIG.BALL_RADIUS / 2,
-    );
-    p.line(
-      this.ballStartX - CONFIG.BALL_RADIUS / 2,
-      -500,
-      this.ballStartX - CONFIG.BALL_RADIUS / 2,
-      1000,
-    );
+
+    // X-Axis (Ground / y = 0)
+    p.line(cameraX, originY, cameraX + this.virtualW, originY);
+
+    // Y-Axis (Vertical line right through x = 0)
+    p.line(originX, -1000, originX, originY + 500);
   }
 
   private drawAimingTrajectory(state: PhysicsState) {
@@ -269,6 +274,50 @@ export class SimulationScene {
     p.endShape();
   }
 
+  private drawFloatingBadge(state: PhysicsState) {
+    const p = this.p;
+
+    // 1. Get current values from the active snapshot or state
+    const launch = this.hasLaunched ? this.launchSnapshot : state;
+    const phys = getPhysicsAtTime(
+      this.simTime,
+      launch.speed,
+      launch.angle,
+      launch.gravity,
+    );
+
+    const speed = Math.hypot(phys.vx, phys.vy);
+
+    const label = `x: ${phys.x.toFixed(1)}m, y: ${phys.y.toFixed(1)}m`;
+    const speedLabel = `t = ${this.simTime.toFixed(2)}s | ${speed.toFixed(1)} m/s`;
+
+    p.push();
+    p.textSize(10);
+    p.textAlign(p.CENTER, p.CENTER);
+
+    // Position it floating right above this.ball
+    const boxW = Math.max(p.textWidth(label), p.textWidth(speedLabel)) + 14;
+    const boxH = 30;
+    const boxX = this.ball.x;
+    const boxY = this.ball.y - CONFIG.BALL_RADIUS - 22;
+
+    // Semi-transparent pill background
+    p.fill(15, 23, 42, 220);
+    p.stroke(71, 85, 105);
+    p.strokeWeight(1);
+    p.rectMode(p.CENTER);
+    p.rect(boxX, boxY, boxW, boxH, 5);
+
+    // Text inside the pill
+    p.noStroke();
+    p.fill(255);
+    p.text(label, boxX, boxY - 5);
+    p.fill(148, 163, 184); // muted text for time & speed
+    p.text(speedLabel, boxX, boxY + 6);
+
+    p.pop();
+  }
+
   private drawRangeIndicator(state: PhysicsState) {
     const p = this.p;
     const launch = this.hasLaunched ? this.launchSnapshot : state;
@@ -277,7 +326,7 @@ export class SimulationScene {
 
     const startX = this.ballStartX;
     const endX = this.ballStartX + metersToPx(range);
-    const y = CONFIG.GROUND_Y + CONFIG.RANGE_LINE_OFFSET;
+    const y = CONFIG.GROUND_Y + CONFIG.GRID_STEP;
     const tick = 6;
     const color =
       launch.mode === "sandbox"
@@ -320,16 +369,11 @@ export class SimulationScene {
 
     p.stroke(color);
     p.strokeWeight(2);
-    this.drawDashedLine(
-      apexX,
-      this.ballStartY + CONFIG.BALL_RADIUS / 2,
-      apexX,
-      apexY + CONFIG.BALL_RADIUS / 2,
-    );
+    this.drawDashedLine(apexX, this.ballStartY, apexX, apexY);
 
     p.fill(color);
     p.noStroke();
-    p.circle(apexX, apexY + 3, 6);
+    p.circle(apexX, apexY, 6);
     p.textSize(12);
     p.textAlign(p.CENTER, p.CENTER);
     p.text(`max height = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 12);
@@ -351,22 +395,6 @@ export class SimulationScene {
 
   private drawBall(state: PhysicsState) {
     const p = this.p;
-    const velocityArrowDx = !this.hasLaunched
-      ? metersToPx(state.speed * p.cos(state.angle))
-      : this.ball.vx;
-
-    const velocityArrowDy = !this.hasLaunched
-      ? metersToPx(-state.speed * p.sin(state.angle))
-      : this.ball.vy;
-
-    this.drawArrow(
-      this.ball.x,
-      this.ball.y,
-      velocityArrowDx,
-      velocityArrowDy,
-      CONFIG.COLORS.ball,
-    );
-
     p.fill(CONFIG.COLORS.ball);
     p.stroke(CONFIG.COLORS.ballBorder);
     p.strokeWeight(2);
@@ -416,6 +444,25 @@ export class SimulationScene {
         airTime,
       });
     }
+  }
+
+  private drawVectorArrows(state: PhysicsState) {
+    const p = this.p;
+    const velocityArrowDx = !this.hasLaunched
+      ? metersToPx(state.speed * p.cos(state.angle))
+      : this.ball.vx;
+
+    const velocityArrowDy = !this.hasLaunched
+      ? metersToPx(-state.speed * p.sin(state.angle))
+      : this.ball.vy;
+
+    this.drawArrow(
+      this.ball.x,
+      this.ball.y,
+      velocityArrowDx,
+      velocityArrowDy,
+      CONFIG.COLORS.ball,
+    );
   }
 
   private drawArrow(

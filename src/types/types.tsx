@@ -7,6 +7,7 @@ export interface PhysicsState {
   isPaused: boolean;
   mode: PhysicsStateMode;
   resetCount: number;
+  launchCount: number;
 }
 
 export interface PhysicsStats {

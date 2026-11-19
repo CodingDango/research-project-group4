@@ -1,13 +1,13 @@
 export const CONFIG = {
   ASPECT: 800 / 500,
   GROUND_Y: 350,
-  BALL_RADIUS: 20,
-  SIM_SPEED: 3,
+  BALL_RADIUS: 15,
+  SIM_SPEED: 4,
   CLOUD_SEED: 6767,
-  RANGE_LINE_OFFSET: 25,
-  PPM: 2, // 2 pixels for 1 meter i think
+  PPM: 1.5, // 2 pixels for 1 meter i think
   DASH_LENGTH: 6,
   DASH_GAP: 4,
+  GRID_STEP: 15,
   COLORS: {
     sandboxBg: "#86e6fe",
     sandboxGroundLine: "#0ba42d",

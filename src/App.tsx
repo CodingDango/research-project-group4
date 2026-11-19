@@ -27,6 +27,7 @@ function App() {
     isPaused: false,
     mode: "coordinate",
     resetCount: 0,
+    launchCount: 0
   });
 
   const [physicsStats, setPhysicsStats] = useState<PhysicsStats>({

@@ -45,12 +45,8 @@ function PhysicsCanvas({
         scene.render(stateRef.current);
       };
 
-      p.mousePressed = (event?: MouseEvent) => {
-        if (event && (event.target as HTMLElement)?.tagName !== "CANVAS")
-          return;
-        if (scene.hasLaunched || stateRef.current.isPaused) return;
-
-        scene.launch(stateRef.current);
+      p.mousePressed = () => {
+        
       };
     };
 

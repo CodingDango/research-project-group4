@@ -29,8 +29,8 @@ const VariablePanel = ({
                 This is where you edit variables
               </p>
             </div>
-            <div className="grid-flow-col grid grid-cols-1 sm:grid-cols-2 grid-rows-2 gap-8">
-              
+            <div className="grid grid-cols-2 grid-rows-2 gap-8">
+              <div className="row-start-1 row-end-1 col-start-1 col-end-1">
                 <SliderField
                   htmlFor="speed"
                   labelText="Speed:"
@@ -40,7 +40,8 @@ const VariablePanel = ({
                   physicsState={physicsState}
                   setState={setPhysicsState}
                 />
-
+              </div>
+              <div className="row-start-2 row-end-2 col-start-1 col-end-1">
                 <SliderField
                   htmlFor="launch-angle"
                   labelText="Launch Angle:"
@@ -50,45 +51,45 @@ const VariablePanel = ({
                   physicsState={physicsState}
                   setState={setPhysicsState}
                 />
-
-              <div className="w-full">
-                <Label className="w-24 inline-block">Gravity:</Label>
-                <NumberInput
-                  min={0}
-                  max={100}
-                  value={physicsState["gravity"]}
-                  key={"gravity"}
-                  onChange={(v) => setPhysicsState("gravity", v)}
-                />
               </div>
-              <div className="w-full">
-                <Label className="w-24 inline-block">Initial Height:</Label>
-                <NumberInput
-                  min={0}
-                  max={100}
-                  value={0}
-                  key={"gravity"}
-                  onChange={(v) => setPhysicsState("gravity", v)}
-                />
-              </div>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div className="flex flex-col gap-6">
-              <div className="flex gap-4">
-                <Label className="text-nowrap w-28">Select Mode</Label>
-                <AppSelect
-                  items={[
-                    { value: "sandbox", label: "Sandbox" },
-                    { value: "coordinate", label: "Coordinate Plane" },
-                  ]}
-                  label="Select Mode"
-                  defaultValue={physicsState["mode"]}
-                  onChange={(value) =>
-                    setPhysicsState("mode", value as PhysicsStateMode)
-                  }
-                />
+              <div className="row-span-2 grid grid-cols-2 ">
+                <div>
+                  <Label className="w-24 inline-block">Gravity:</Label>
+                  <NumberInput
+                    min={0}
+                    max={100}
+                    value={physicsState["gravity"]}
+                    key={"gravity"}
+                    onChange={(v) => setPhysicsState("gravity", v)}
+                  />
+                </div>
+                <div>
+                  <Label className="w-24 inline-block">Initial Height:</Label>
+                  <NumberInput
+                    min={0}
+                    max={100}
+                    value={0}
+                    key={"gravity"}
+                    onChange={(v) => setPhysicsState("gravity", v)}
+                  />
+                </div>
+                <div className="flex gap-4 items-center -mt-4">
+                  <Label className="text-nowrap w-28">Select Mode</Label>
+                  <div className="flex-1">
+                    <AppSelect
+                      items={[
+                        { value: "sandbox", label: "Sandbox" },
+                        { value: "coordinate", label: "Coordinate Plane" },
+                      ]}
+                      label="Select Mode"
+                      defaultValue={physicsState["mode"]}
+                      onChange={(value) =>
+                        setPhysicsState("mode", value as PhysicsStateMode)
+                      }
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

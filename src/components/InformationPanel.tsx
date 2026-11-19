@@ -40,7 +40,7 @@ const InformationPanel = ({ stats }: { stats: PhysicsStats }) => {
       {/* Flight Time */}
       <Card className="rounded-xl p-4 text-center gap-1">
         <span className="block text-xs font-medium text-muted-foreground uppercase ">
-          Flight Time
+          Total Flight Time
         </span>
         <span
           className={`text-base sm:text-lg font-mono ${colors.flightTime}`}
