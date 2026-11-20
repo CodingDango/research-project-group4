@@ -2,6 +2,8 @@ import { Button } from "./ui/button";
 import type { PhysicsState, PhysicsStateSetter } from "@/types/types";
 import { FaPause, FaPlay } from "react-icons/fa6";
 import { RiResetLeftFill as Reset } from "react-icons/ri";
+import { AiOutlineZoomIn as ZoomIn, AiOutlineZoomOut as ZoomOut} from "react-icons/ai";
+
 import { Card, CardContent } from "./ui/card";
 import { useState } from "react";
 
@@ -12,7 +14,7 @@ const ControlPanel = ({
   physicsState: PhysicsState;
   setPhysicsState: PhysicsStateSetter;
 }) => {
-  const [isLaunchDisabled, setIsLaunchDisabled] = useState(false)
+  const [isLaunchDisabled, setIsLaunchDisabled] = useState(false);
 
   const handlePause = () => {
     setPhysicsState("isPaused", !physicsState["isPaused"]);
@@ -22,17 +24,18 @@ const ControlPanel = ({
     setPhysicsState("isPaused", false);
     setIsLaunchDisabled(false);
   };
-  const handleLaunch = () => {{
-    setPhysicsState('launchCount', physicsState['launchCount'] + 1);
+  const handleLaunch = () => {
+    setPhysicsState("launchCount", physicsState["launchCount"] + 1);
     setIsLaunchDisabled(true);
-  }}
+  };
+  const handleResetCamera = () => {};
 
   return (
     <Card>
-      <CardContent className="grid grid-cols-10 gap-2">
+      <CardContent className="grid grid-cols-12 gap-2">
         <Button
           className={"col-span-2 w-full h-10 sm:h-12 rounded-2xl font-semibold"}
-          variant={'default'}
+          variant={"default"}
           onClick={handleLaunch}
           disabled={isLaunchDisabled}
         >
@@ -40,10 +43,10 @@ const ControlPanel = ({
         </Button>
         <Button
           className={" w-full h-10 sm:h-12 rounded-2xl"}
-          variant={'secondary'}
+          variant={"secondary"}
           onClick={handlePause}
         >
-          {physicsState["isPaused"] ?  <FaPlay /> : <FaPause />  }
+          {physicsState["isPaused"] ? <FaPlay /> : <FaPause />}
         </Button>
         <Button
           className={"w-full h-10 sm:h-12 rounded-2xl"}
@@ -51,6 +54,27 @@ const ControlPanel = ({
           variant={"secondary"}
         >
           <Reset />
+        </Button>
+        <Button
+          className={"col-start-9 w-full h-10 sm:h-12 rounded-2xl"}
+          onClick={handleResetCamera}
+          variant={"secondary"}
+        >
+          <ZoomIn/>
+        </Button>
+        <Button
+          className={"col-start-10 w-full h-10 sm:h-12 rounded-2xl"}
+          onClick={handleResetCamera}
+          variant={"secondary"}
+        >
+          <ZoomOut className="scale-1.5!"/>
+        </Button>
+        <Button
+          className={"col-start-11 col-span-2 w-full h-10 sm:h-12 rounded-2xl"}
+          onClick={handleResetCamera}
+          variant={"secondary"}
+        >
+          Reset Camera
         </Button>
       </CardContent>
     </Card>
