@@ -28,6 +28,11 @@ export class SimulationScene {
   public lastResetCount = 0;
   public lastLaunchCount = 0;
 
+  // camera
+  public cameraX = 0;
+  public cameraY = 0;
+  public isTrackingBall = true; // true = follow ball, false = manual drag
+
   // Ball State
   public ball = {
     x: this.ballStartX,
@@ -68,9 +73,9 @@ export class SimulationScene {
 
   public handleLaunch(state: PhysicsState) {
     if (state.launchCount == this.lastLaunchCount) return;
-    
+
     this.lastLaunchCount = state.launchCount;
-    
+
     if (this.hasLaunched || state.isPaused) return;
 
     const { speed, angle, gravity } = state;
@@ -96,6 +101,8 @@ export class SimulationScene {
     this.totalFlightTime = 0;
     this.simTime = 0;
     this.p.randomSeed(CONFIG.CLOUD_SEED);
+    this.cameraX = 0;
+    this.cameraY = 0;
   }
 
   public update(dt: number, state: PhysicsState, setStats: PhysicsStatsSetter) {
@@ -161,14 +168,40 @@ export class SimulationScene {
 
   private setupCamera() {
     const p = this.p;
-    const groundCameraY = CONFIG.GROUND_Y - (p.height - 80) / this.scale;
-    const ballCameraY = this.ball.y - (p.height * 0.5) / this.scale;
-    const cameraY = Math.min(groundCameraY, ballCameraY);
-    const cameraX = Math.max(0, this.ball.x - (p.width * 0.3) / this.scale);
-
     p.scale(this.scale);
-    p.translate(-cameraX, -cameraY);
-    return cameraX;
+    p.translate(-this.cameraX, -this.cameraY);
+
+    return this.cameraX;
+  }
+
+  public handlePan() {
+    const p = this.p;
+
+    // If mouse is being held down right now
+    if (p.mouseIsPressed) {
+      // Make sure mouse is actually inside the canvas
+      if (
+        p.mouseX >= 0 &&
+        p.mouseX <= p.width &&
+        p.mouseY >= 0 &&
+        p.mouseY <= p.height
+      ) {
+        // Calculate how much mouse moved since last frame
+        const dx = p.mouseX - p.pmouseX;
+        const dy = p.mouseY - p.pmouseY;
+
+        // Only move if mouse actually moved
+        if (dx !== 0 || dy !== 0) {
+          this.isTrackingBall = false; // Turn off auto-follow
+          this.cameraX -= dx / (this.scale || 1);
+          this.cameraY -= dy / (this.scale || 1);
+        }
+      }
+    }
+  }
+
+  public recenterCamera() {
+    this.isTrackingBall = true;
   }
 
   private drawWorld(cameraX: number, state: PhysicsState) {
@@ -223,18 +256,20 @@ export class SimulationScene {
     // 1. FAINT GRID LINES
     p.stroke("#1e293b");
     p.strokeWeight(1);
+    
     // VERTICAL LINES:
     // Start 50px behind the camera (or -50m), step forward across the whole screen
     const startX =
       originX -
       Math.ceil((originX - (cameraX - 100)) / gridStepPx) * gridStepPx;
+
     for (let x = startX; x < cameraX + this.virtualW + 100; x += gridStepPx) {
-      p.line(x, -1000, x, originY + 200); // extends above and below
+      p.line(x, -1000, x, originY + gridStepPx * 50); // extends above and below
     }
 
     // HORIZONTAL LINES:
     // Start below the ground and go way up into the sky
-    for (let y = originY + gridStepPx * 3; y > -1000; y -= gridStepPx) {
+    for (let y = originY + gridStepPx * 50; y > -1000; y -= gridStepPx) {
       p.line(cameraX - 100, y, cameraX + this.virtualW + 100, y);
     }
 
@@ -246,7 +281,7 @@ export class SimulationScene {
     p.line(cameraX, originY, cameraX + this.virtualW, originY);
 
     // Y-Axis (Vertical line right through x = 0)
-    p.line(originX, -1000, originX, originY + 500);
+    p.line(originX, -1000, originX, originY + gridStepPx * 50);
   }
 
   private drawAimingTrajectory(state: PhysicsState) {
