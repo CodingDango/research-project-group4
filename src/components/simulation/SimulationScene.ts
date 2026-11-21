@@ -144,11 +144,13 @@ export class SimulationScene {
     const cameraX = this.setupCamera();
     this.drawWorld(cameraX, state);
     this.drawTrail();
+    this.drawVectorArrows(state);
     this.drawAimingTrajectory(state);
     this.drawApexIndicator(state);
     this.drawRangeIndicator(state);
     this.drawFloatingBadge(state);
-    this.drawBall(state);
+    this.drawBall();
+    
 
     p.pop();
     this.drawHUD(state);
@@ -440,7 +442,7 @@ export class SimulationScene {
     }
   }
 
-  private drawBall(state: PhysicsState) {
+  private drawBall() {
     const p = this.p;
     p.fill(CONFIG.COLORS.ball);
     p.stroke(CONFIG.COLORS.ballBorder);
