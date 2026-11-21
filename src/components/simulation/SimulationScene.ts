@@ -31,9 +31,9 @@ export class SimulationScene {
   // camera
   public cameraX = 0;
   public cameraY = 0;
-  public isTrackingBall = true; // true = follow ball, false = manual drag
   public lastResetCameraCount = 0;
   public zoom = 1;
+  public lastZoom = 1;
 
   // Ball State
   public ball = {
@@ -105,11 +105,35 @@ export class SimulationScene {
     this.p.randomSeed(CONFIG.CLOUD_SEED);
   }
 
+  public handleZoom(state: PhysicsState) {
+    this.zoom = state.zoom;
+
+    if (this.zoom === this.lastZoom) return;
+
+    const p = this.p;
+    const oldZoom = this.lastZoom;
+    const newZoom = this.zoom;
+
+    // 1. Find the point in the world that is currently at the center of the screen
+    const viewW = p.width / (this.scale * oldZoom);
+    const viewH = p.height / (this.scale * oldZoom);
+    const worldCenterX = this.cameraX + viewW / 2;
+    const worldCenterY = this.cameraY + viewH / 2;
+
+    // 2. Adjust camera so that exact same center point stays in the center
+    const newViewW = p.width / (this.scale * newZoom);
+    const newViewH = p.height / (this.scale * newZoom);
+    this.cameraX = worldCenterX - newViewW / 2;
+    this.cameraY = worldCenterY - newViewH / 2;
+
+    // 3. Keep them in sync
+    this.lastZoom = newZoom;
+  }
+
   public update(dt: number, state: PhysicsState, setStats: PhysicsStatsSetter) {
     this.handleButtons(state);
+    this.handleZoom(state);
     this.updateStats(state, setStats);
-
-    this.zoom = state.zoom;
 
     if (!this.isFiring || state.isPaused) return;
 
@@ -150,7 +174,6 @@ export class SimulationScene {
     this.drawRangeIndicator(state);
     this.drawFloatingBadge(state);
     this.drawBall();
-    
 
     p.pop();
     this.drawHUD(state);
@@ -168,6 +191,8 @@ export class SimulationScene {
       this.lastResetCameraCount = state.resetCameraCount;
       this.cameraX = 0;
       this.cameraY = 0;
+      this.zoom = 1;
+      this.lastZoom = 1;
     }
   }
 
@@ -206,16 +231,12 @@ export class SimulationScene {
 
         // Only move if mouse actually moved
         if (dx !== 0 || dy !== 0) {
-          this.isTrackingBall = false; // Turn off auto-follow
-          this.cameraX -= dx / (this.scale || 1);
-          this.cameraY -= dy / (this.scale || 1);
+          const totalScale = this.scale * this.zoom;
+          this.cameraX -= dx / (totalScale || 1);
+          this.cameraY -= dy / (totalScale || 1);
         }
       }
     }
-  }
-
-  public recenterCamera() {
-    this.isTrackingBall = true;
   }
 
   private drawWorld(cameraX: number, state: PhysicsState) {
