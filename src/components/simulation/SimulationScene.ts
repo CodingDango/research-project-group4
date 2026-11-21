@@ -19,19 +19,21 @@ export class SimulationScene {
   public ballStartX = 60;
   public ballStartY = CONFIG.GROUND_Y - CONFIG.BALL_RADIUS / 2;
 
-  // Physics & Simulation Clock
+  // Physics
   public simTime = 0;
   public totalFlightTime = 0;
   public isFiring = false;
   public hasLaunched = false;
   public hasReachedApex = false;
-  public lastResetCount = 0;
+  public lastResetBallCount = 0;
   public lastLaunchCount = 0;
 
   // camera
   public cameraX = 0;
   public cameraY = 0;
   public isTrackingBall = true; // true = follow ball, false = manual drag
+  public lastResetCameraCount = 0;
+  public zoom = 1;
 
   // Ball State
   public ball = {
@@ -101,19 +103,13 @@ export class SimulationScene {
     this.totalFlightTime = 0;
     this.simTime = 0;
     this.p.randomSeed(CONFIG.CLOUD_SEED);
-    this.cameraX = 0;
-    this.cameraY = 0;
   }
 
   public update(dt: number, state: PhysicsState, setStats: PhysicsStatsSetter) {
-    this.handleLaunch(state);
-
-    if (state.resetCount !== this.lastResetCount) {
-      this.lastResetCount = state.resetCount;
-      this.reset();
-    }
-
+    this.handleButtons(state);
     this.updateStats(state, setStats);
+
+    this.zoom = state.zoom;
 
     if (!this.isFiring || state.isPaused) return;
 
@@ -158,6 +154,21 @@ export class SimulationScene {
     this.drawHUD(state);
   }
 
+  public handleButtons(state: PhysicsState) {
+    this.handleLaunch(state);
+
+    if (state.resetBallCount !== this.lastResetBallCount) {
+      this.lastResetBallCount = state.resetBallCount;
+      this.reset();
+    }
+
+    if (state.resetCameraCount !== this.lastResetCameraCount) {
+      this.lastResetCameraCount = state.resetCameraCount;
+      this.cameraX = 0;
+      this.cameraY = 0;
+    }
+  }
+
   public updateDimensions(w: number) {
     const isMobile = w < 600;
     const aspect = isMobile ? 4 / 3 : 16 / 10;
@@ -168,7 +179,8 @@ export class SimulationScene {
 
   private setupCamera() {
     const p = this.p;
-    p.scale(this.scale);
+    const totalScale = this.scale * this.zoom;
+    p.scale(totalScale);
     p.translate(-this.cameraX, -this.cameraY);
 
     return this.cameraX;
@@ -256,7 +268,7 @@ export class SimulationScene {
     // 1. FAINT GRID LINES
     p.stroke("#1e293b");
     p.strokeWeight(1);
-    
+
     // VERTICAL LINES:
     // Start 50px behind the camera (or -50m), step forward across the whole screen
     const startX =

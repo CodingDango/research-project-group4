@@ -5,12 +5,7 @@ import {
   type PhysicsState,
   type PhysicsStateSetter,
 } from "./types/types";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "./components/ui/card";
+
 
 import InformationPanel from "./components/InformationPanel";
 import CanvasStage from "./components/CanvasStage";
@@ -26,8 +21,10 @@ function App() {
     friction: 0.8,
     isPaused: false,
     mode: "coordinate",
-    resetCount: 0,
-    launchCount: 0
+    resetBallCount: 0,
+    launchCount: 0,
+    resetCameraCount: 0,
+    zoom: 1
   });
 
   const [physicsStats, setPhysicsStats] = useState<PhysicsStats>({

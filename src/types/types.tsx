@@ -6,8 +6,10 @@ export interface PhysicsState {
   friction: number;
   isPaused: boolean;
   mode: PhysicsStateMode;
-  resetCount: number;
+  resetBallCount: number;
   launchCount: number;
+  resetCameraCount: number;
+  zoom: number;
 }
 
 export interface PhysicsStats {

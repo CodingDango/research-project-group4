@@ -20,7 +20,7 @@ const ControlPanel = ({
     setPhysicsState("isPaused", !physicsState["isPaused"]);
   };
   const handleReset = () => {
-    setPhysicsState("resetCount", physicsState["resetCount"] + 1);
+    setPhysicsState("resetBallCount", physicsState["resetBallCount"] + 1);
     setPhysicsState("isPaused", false);
     setIsLaunchDisabled(false);
   };
@@ -28,7 +28,14 @@ const ControlPanel = ({
     setPhysicsState("launchCount", physicsState["launchCount"] + 1);
     setIsLaunchDisabled(true);
   };
-  const handleResetCamera = () => {};
+  const handleResetCamera = () => {
+    setPhysicsState("resetCameraCount", physicsState["resetCameraCount"] + 1);
+    setPhysicsState('zoom', 1);
+  };
+  const handleZoom = (method: 'decrease' | 'increase') => {
+    const change = method == 'decrease' ? -0.1 : 0.1;
+    setPhysicsState('zoom', physicsState['zoom'] + change);
+  }
 
   return (
     <Card>
@@ -57,14 +64,14 @@ const ControlPanel = ({
         </Button>
         <Button
           className={"col-start-9 w-full h-10 sm:h-12 rounded-2xl"}
-          onClick={handleResetCamera}
+          onClick={() => handleZoom('increase')}
           variant={"secondary"}
         >
           <ZoomIn/>
         </Button>
         <Button
           className={"col-start-10 w-full h-10 sm:h-12 rounded-2xl"}
-          onClick={handleResetCamera}
+          onClick={() => handleZoom('decrease')}
           variant={"secondary"}
         >
           <ZoomOut className="scale-1.5!"/>
