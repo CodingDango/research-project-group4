@@ -172,6 +172,7 @@ export class SimulationScene {
     this.drawAimingTrajectory(state);
     this.drawApexIndicator(state);
     this.drawRangeIndicator(state);
+    this.drawInspectionPoints(state);
     this.drawFloatingBadge(state);
     this.drawBall();
 
@@ -351,6 +352,71 @@ export class SimulationScene {
     p.text(speedLabel, boxX, boxY + 6);
 
     p.pop();
+  }
+
+  private getWorldMouse() {
+    const totalScale = this.scale * this.zoom || 1;
+    return {
+      x: this.cameraX + this.p.mouseX / totalScale,
+      y: this.cameraY + this.p.mouseY / totalScale,
+    };
+  }
+
+  private drawInspectionPoints(state: PhysicsState) {
+    const p = this.p;
+    const launch = this.hasLaunched ? this.launchSnapshot : state;
+    const duration = calculateFlightTime(
+      launch.speed,
+      launch.angle,
+      launch.gravity,
+    );
+
+    if (duration <= 0) return;
+
+    const step = 0.125;
+    const totalSteps = 1 / step + 1;
+    const fractions = Array.from({ length: totalSteps }, (_, i) => i * step);
+    const mouse = this.getWorldMouse();
+
+    for (const frac of fractions) {
+      const t = frac * duration;
+      const phys = getPhysicsAtTime(
+        t,
+        launch.speed,
+        launch.angle,
+        launch.gravity,
+      );
+
+      // Screen pixel position of this point
+      const px = this.ballStartX + metersToPx(phys.x);
+      const py = this.ballStartY - metersToPx(phys.y);
+
+      // Check if mouse is hovering near this point (within 12px)
+      const distToMouse = Math.hypot(mouse.x - px, mouse.y - py);
+      const isHovered = distToMouse < 12;
+
+      // If the user clicks on this point:
+      if (isHovered && p.mouseIsPressed) {
+        this.simTime = t; // Snap time to this exact point!
+        this.isFiring = false; // Pause flight so user can inspect
+        this.hasLaunched = true;
+        this.launchSnapshot = this.snapshot(state);
+
+        // Instantly snap ball coordinates
+        this.ball.x = px;
+        this.ball.y = py;
+        this.ball.vx = metersToPx(phys.vx);
+        this.ball.vy = metersToPx(-phys.vy);
+      }
+
+      // DRAW THE POINT
+      p.push();
+      p.fill(CONFIG.COLORS.ball);
+      p.stroke(255);
+      p.strokeWeight(2);
+      p.circle(px, py, isHovered ? 10 : 7);
+      p.pop();
+    }
   }
 
   private drawRangeIndicator(state: PhysicsState) {
