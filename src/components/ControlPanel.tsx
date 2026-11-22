@@ -34,7 +34,8 @@ const ControlPanel = ({
   };
   const handleZoom = (method: 'decrease' | 'increase') => {
     const change = method == 'decrease' ? -0.1 : 0.1;
-    setPhysicsState('zoom', physicsState['zoom'] + change);
+    const newZoom = Math.min(Math.max(physicsState['zoom'] + change, 0.5), 2);
+    setPhysicsState('zoom', newZoom);
   }
 
   return (

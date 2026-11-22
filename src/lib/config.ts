@@ -8,6 +8,7 @@ export const CONFIG = {
   DASH_LENGTH: 6,
   DASH_GAP: 4,
   GRID_STEP: 15,
+  MAX_ZOOM: 2,
   COLORS: {
     sandboxBg: "#86e6fe",
     sandboxGroundLine: "#0ba42d",

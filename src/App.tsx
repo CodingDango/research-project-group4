@@ -6,7 +6,6 @@ import {
   type PhysicsStateSetter,
 } from "./types/types";
 
-
 import InformationPanel from "./components/InformationPanel";
 import CanvasStage from "./components/CanvasStage";
 import VariablePanel from "./components/VariablePanel";
@@ -24,7 +23,7 @@ function App() {
     resetBallCount: 0,
     launchCount: 0,
     resetCameraCount: 0,
-    zoom: 1
+    zoom: 1,
   });
 
   const [physicsStats, setPhysicsStats] = useState<PhysicsStats>({
@@ -42,11 +41,13 @@ function App() {
     <div className="bg-background text-foreground min-h-screen max-w-4xl p-4 my-12 sm:p-6 mx-auto">
       <div className="flex flex-col gap-6">
         <ControlPanel setPhysicsState={setState} physicsState={physicsState} />
-        <CanvasStage
-          physicsState={physicsState}
-          setPhysicsState={setState}
-          setStats={setPhysicsStats}
-        />
+        <div className="border rounded-2xl">
+          <CanvasStage
+            physicsState={physicsState}
+            setPhysicsState={setState}
+            setStats={setPhysicsStats}
+          />
+        </div>
         <InformationPanel stats={physicsStats} />
         <VariablePanel physicsState={physicsState} setPhysicsState={setState} />
       </div>

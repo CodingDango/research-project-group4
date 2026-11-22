@@ -106,7 +106,7 @@ export class SimulationScene {
   }
 
   public handleZoom(state: PhysicsState) {
-    this.zoom = state.zoom;
+    this.zoom = Math.min(Math.max(state.zoom, 0.5), 2);
 
     if (this.zoom === this.lastZoom) return;
 
@@ -165,8 +165,8 @@ export class SimulationScene {
     p.clear();
     p.push();
 
-    const cameraX = this.setupCamera();
-    this.drawWorld(cameraX, state);
+    this.setupCamera();
+    this.drawCoordinateGrid();
     this.drawTrail();
     this.drawVectorArrows(state);
     this.drawAimingTrajectory(state);
@@ -209,8 +209,6 @@ export class SimulationScene {
     const totalScale = this.scale * this.zoom;
     p.scale(totalScale);
     p.translate(-this.cameraX, -this.cameraY);
-
-    return this.cameraX;
   }
 
   public handlePan() {
@@ -239,48 +237,9 @@ export class SimulationScene {
     }
   }
 
-  private drawWorld(cameraX: number, state: PhysicsState) {
-    const mode = this.isFiring ? this.launchSnapshot.mode : state.mode;
-    if (mode === "coordinate") {
-      this.drawCoordinateGrid(cameraX);
-    } else {
-      this.drawBackground(cameraX);
-      this.drawGround(cameraX);
-    }
-  }
-
-  private drawBackground(cameraX: number) {
+  private drawCoordinateGrid() {
     const p = this.p;
-    p.background(CONFIG.COLORS.sandboxBg);
-
-    while (this.nextCloudX < cameraX + this.virtualW + 300) {
-      this.clouds.push({ x: this.nextCloudX, y: p.random(-20, 20) });
-      this.nextCloudX += p.random(150, 350);
-    }
-    this.clouds = this.clouds.filter((c) => c.x > cameraX - 150);
-
-    for (const c of this.clouds) {
-      p.noStroke();
-      p.fill(255);
-      p.rect(c.x - 60, c.y, 120, 45, 30);
-      p.circle(c.x, c.y, 50);
-    }
-  }
-
-  private drawGround(cameraX: number) {
-    const p = this.p;
-    p.stroke(CONFIG.COLORS.sandboxGroundLine);
-    p.strokeWeight(6);
-    p.line(0, CONFIG.GROUND_Y, 999999, CONFIG.GROUND_Y);
-
-    p.fill(CONFIG.COLORS.sandboxGroundFill);
-    p.noStroke();
-    p.rect(cameraX, CONFIG.GROUND_Y + 2, this.virtualW, 300);
-  }
-
-  private drawCoordinateGrid(cameraX: number) {
-    const p = this.p;
-    p.background("#0b0f19");
+    p.background("#202020");
 
     const gridStepMeters = CONFIG.GRID_STEP;
     const gridStepPx = metersToPx(gridStepMeters);
@@ -288,35 +247,42 @@ export class SimulationScene {
     const originX = this.ballStartX;
     const originY = this.ballStartY;
 
-    // 1. FAINT GRID LINES
-    p.stroke("#1e293b");
+    const totalScale = this.scale * this.zoom || 1;
+    const visibleW = p.width / totalScale;
+    const visibleH = p.height / totalScale;
+
+    const visibleLeft = this.cameraX - 100;
+    const visibleRight = this.cameraX + visibleW + 100; // <-- Now accounts for zoom!
+    const visibleTop = this.cameraY - 100;
+    const visibleBottom = this.cameraY + visibleH + 100; // <-- Now accounts for zoom!
+
+    // GRID LINES
+    p.stroke("#2a2a2a");
     p.strokeWeight(1);
 
-    // VERTICAL LINES:
-    // Start 50px behind the camera (or -50m), step forward across the whole screen
+    // Vertical lines across the whole visible screen
     const startX =
-      originX -
-      Math.ceil((originX - (cameraX - 100)) / gridStepPx) * gridStepPx;
-
-    for (let x = startX; x < cameraX + this.virtualW + 100; x += gridStepPx) {
-      p.line(x, -1000, x, originY + gridStepPx * 50); // extends above and below
+      originX - Math.ceil((originX - visibleLeft) / gridStepPx) * gridStepPx;
+    for (let x = startX; x < visibleRight; x += gridStepPx) {
+      p.line(x, visibleTop, x, visibleBottom);
     }
 
-    // HORIZONTAL LINES:
-    // Start below the ground and go way up into the sky
-    for (let y = originY + gridStepPx * 50; y > -1000; y -= gridStepPx) {
-      p.line(cameraX - 100, y, cameraX + this.virtualW + 100, y);
+    // Horizontal lines across the whole visible screen
+    const startY =
+      originY - Math.ceil((originY - visibleTop) / gridStepPx) * gridStepPx;
+    for (let y = startY; y < visibleBottom; y += gridStepPx) {
+      p.line(visibleLeft, y, visibleRight, y);
     }
 
-    // 2. MAIN AXES (X and Y axis lines)
-    p.stroke("#475569");
+    // X AND Y AXIS
+    p.stroke("#7a787a");
     p.strokeWeight(2);
 
-    // X-Axis (Ground / y = 0)
-    p.line(cameraX, originY, cameraX + this.virtualW, originY);
+    // X-Axis
+    p.line(visibleLeft, originY, visibleRight, originY);
 
-    // Y-Axis (Vertical line right through x = 0)
-    p.line(originX, -1000, originX, originY + gridStepPx * 50);
+    // Y-Axis
+    p.line(originX, visibleTop, originX, visibleBottom);
   }
 
   private drawAimingTrajectory(state: PhysicsState) {
