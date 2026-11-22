@@ -337,9 +337,8 @@ export class SimulationScene {
     const boxX = this.ball.x;
     const boxY = this.ball.y - CONFIG.BALL_RADIUS - 22;
 
-    // Semi-transparent pill background
-    p.fill(15, 23, 42, 220);
-    p.stroke(71, 85, 105);
+    p.fill(CONFIG.COLORS.floatingBadgeBg);
+    p.stroke(CONFIG.COLORS.floatingBadgeOutline);
     p.strokeWeight(1);
     p.rectMode(p.CENTER);
     p.rect(boxX, boxY, boxW, boxH, 5);
@@ -348,7 +347,7 @@ export class SimulationScene {
     p.noStroke();
     p.fill(255);
     p.text(label, boxX, boxY - 5);
-    p.fill(148, 163, 184); // muted text for time & speed
+    p.fill(CONFIG.COLORS.floatingBadgeSecondaryText); // muted text for time & speed
     p.text(speedLabel, boxX, boxY + 6);
 
     p.pop();
