@@ -176,7 +176,7 @@ export class SimulationScene {
     this.drawBall();
 
     p.pop();
-    this.drawHUD(state);
+    this.drawHUD();
   }
 
   public handleButtons(state: PhysicsState) {
@@ -364,10 +364,7 @@ export class SimulationScene {
     const endX = this.ballStartX + metersToPx(range);
     const y = CONFIG.GROUND_Y + CONFIG.GRID_STEP;
     const tick = 6;
-    const color =
-      launch.mode === "sandbox"
-        ? CONFIG.COLORS.rangeLineColor
-        : CONFIG.COLORS.rangeLineColorCoords;
+    const color = CONFIG.COLORS.rangeLineColorCoords;
 
     p.stroke(color);
     p.strokeWeight(2);
@@ -398,10 +395,7 @@ export class SimulationScene {
 
     const apexX = this.ballStartX + metersToPx(formulaRange / 2);
     const apexY = this.ballStartY - metersToPx(formulaMaxHeight);
-    const color =
-      launch.mode === "sandbox"
-        ? CONFIG.COLORS.apexLineColorSandbox
-        : CONFIG.COLORS.apexLineColorCoords;
+    const color = CONFIG.COLORS.apexLineColorCoords;
 
     p.stroke(color);
     p.strokeWeight(2);
@@ -437,12 +431,9 @@ export class SimulationScene {
     p.circle(this.ball.x, this.ball.y, CONFIG.BALL_RADIUS);
   }
 
-  private drawHUD(state: PhysicsState) {
+  private drawHUD() {
     const p = this.p;
-    const color =
-      state.mode === "coordinate"
-        ? CONFIG.COLORS.coordinateTextColor
-        : CONFIG.COLORS.sandboxTextColor;
+    const color = CONFIG.COLORS.coordinateTextColor;
     p.fill(color);
     p.noStroke();
     p.textSize(16);
