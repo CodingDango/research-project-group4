@@ -12,12 +12,12 @@ export const CONFIG = {
   COLORS: {
     ball: "#df6035",
     ballBorder: "#FFFFFF",
-    apexLineColorCoords: "#5389d9",
-    rangeLineColorCoords: "#5389d9",
+    apexLineColorCoords: "#FFFFFF",
+    rangeLineColorCoords: "#FFFFFF",
     trajectoryColor: "#f33e54",
     coordinateTextColor: "#FFFFFF",
     floatingBadgeBg: '#202020',
     floatingBadgeOutline: '#484848',
-    floatingBadgeSecondaryText: '#df4d29'
+    floatingBadgeSecondaryText: '#df6035'
   },
 };

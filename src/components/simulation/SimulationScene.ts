@@ -324,9 +324,9 @@ export class SimulationScene {
     );
 
     const speed = Math.hypot(phys.vx, phys.vy);
-
-    const label = `x: ${phys.x.toFixed(1)}m, y: ${phys.y.toFixed(1)}m`;
-    const speedLabel = `t = ${this.simTime.toFixed(2)}s | ${speed.toFixed(1)} m/s`;
+    const speedSign = Math.sign(phys.vy) == 1 ? '' : '-';
+    const label = `x: ${phys.x.toFixed(1)}m y: ${phys.y.toFixed(1)}m`;
+    const speedLabel = `t = ${this.simTime.toFixed(2)}s, v = ${speedSign}${speed.toFixed(1)} m/s`;
 
     p.push();
     p.textSize(10);
@@ -392,8 +392,8 @@ export class SimulationScene {
       const py = this.ballStartY - metersToPx(phys.y);
 
       // Check if mouse is hovering near this point (within 12px)
-      const distToMouse = Math.hypot(mouse.x - px, mouse.y - py);
-      const isHovered = distToMouse < 12;
+      const distToMouse = (mouse.x - px) ** 2 + (mouse.y - py) ** 2
+      const isHovered = distToMouse < 144 // 12^2;
 
       // If the user clicks on this point:
       if (isHovered && p.mouseIsPressed) {
@@ -471,7 +471,7 @@ export class SimulationScene {
     p.circle(apexX, apexY, 6);
     p.textSize(12);
     p.textAlign(p.CENTER, p.CENTER);
-    p.text(`max height = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 12);
+    p.text(`max height = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 32);
   }
 
   private drawTrail() {
