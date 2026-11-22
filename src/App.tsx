@@ -6,10 +6,12 @@ import {
   type PhysicsStateSetter,
 } from "./types/types";
 
+
 import InformationPanel from "./components/InformationPanel";
 import CanvasStage from "./components/CanvasStage";
 import VariablePanel from "./components/VariablePanel";
 import ControlPanel from "./components/ControlPanel";
+import AppHeader from "./components/AppHeader";
 
 function App() {
   const [physicsState, setPhysicsState] = useState<PhysicsState>({
@@ -38,18 +40,28 @@ function App() {
   };
 
   return (
-    <div className="bg-background text-foreground min-h-screen max-w-4xl p-4 my-12 sm:p-6 mx-auto">
-      <div className="flex flex-col gap-6">
-        <ControlPanel setPhysicsState={setState} physicsState={physicsState} />
-        <div className="border rounded-2xl">
-          <CanvasStage
+    <div className="bg-background text-foreground min-h-screen ">
+      <AppHeader />
+
+      <div className="max-w-4xl p-4 my-12 sm:p-6 mx-auto">
+        <div className="flex flex-col gap-6">
+          <ControlPanel
+            setPhysicsState={setState}
+            physicsState={physicsState}
+          />
+          <div className="border rounded-2xl">
+            <CanvasStage
+              physicsState={physicsState}
+              setPhysicsState={setState}
+              setStats={setPhysicsStats}
+            />
+          </div>
+          <InformationPanel stats={physicsStats} />
+          <VariablePanel
             physicsState={physicsState}
             setPhysicsState={setState}
-            setStats={setPhysicsStats}
           />
         </div>
-        <InformationPanel stats={physicsStats} />
-        <VariablePanel physicsState={physicsState} setPhysicsState={setState} />
       </div>
     </div>
   );
