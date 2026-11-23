@@ -2,7 +2,10 @@ import { Button } from "./ui/button";
 import type { PhysicsState, PhysicsStateSetter } from "@/types/types";
 import { FaPause, FaPlay } from "react-icons/fa6";
 import { RiResetLeftFill as Reset } from "react-icons/ri";
-import { AiOutlineZoomIn as ZoomIn, AiOutlineZoomOut as ZoomOut} from "react-icons/ai";
+import {
+  AiOutlineZoomIn as ZoomIn,
+  AiOutlineZoomOut as ZoomOut,
+} from "react-icons/ai";
 
 import { Card, CardContent } from "./ui/card";
 import { useState } from "react";
@@ -31,17 +34,20 @@ const ControlPanel = ({
   };
   const handleResetCamera = () => {
     setPhysicsState("resetCameraCount", physicsState["resetCameraCount"] + 1);
-    setPhysicsState('zoom', 1);
+    setPhysicsState("zoom", 1);
   };
-  const handleZoom = (method: 'decrease' | 'increase') => {
-    const change = method == 'decrease' ? -0.1 : 0.1;
-    const newZoom = Math.min(Math.max(physicsState['zoom'] + change, CONFIG.MIN_ZOOM), CONFIG.MAX_ZOOM);
-    setPhysicsState('zoom', newZoom);
-  }
+  const handleZoom = (method: "decrease" | "increase") => {
+    const change = method == "decrease" ? -0.1 : 0.1;
+    const newZoom = Math.min(
+      Math.max(physicsState["zoom"] + change, CONFIG.MIN_ZOOM),
+      CONFIG.MAX_ZOOM,
+    );
+    setPhysicsState("zoom", newZoom);
+  };
 
   return (
     <Card>
-      <CardContent className="grid grid-cols-12 gap-2">
+      <CardContent className="grid sm:grid-cols-12 gap-2">
         <Button
           className={"col-span-2 w-full h-10 sm:h-12 rounded-2xl font-semibold"}
           variant={"default"}
@@ -64,22 +70,23 @@ const ControlPanel = ({
         >
           <Reset />
         </Button>
+
         <Button
-          className={"col-start-9 w-full h-10 sm:h-12 rounded-2xl"}
-          onClick={() => handleZoom('increase')}
+          className={"col-start-1 sm:col-start-9 w-full h-10 sm:h-12 row-start-2 row-end-2  sm:row-start-1 sm:row-end-1  rounded-2xl"}
+          onClick={() => handleZoom("increase")}
           variant={"secondary"}
         >
-          <ZoomIn/>
+          <ZoomIn />
         </Button>
         <Button
-          className={"col-start-10 w-full h-10 sm:h-12 rounded-2xl"}
-          onClick={() => handleZoom('decrease')}
+          className={"col-start-2 sm:col-start-10 w-full h-10 sm:h-12 row-start-2 row-end-2 sm:row-start-1 sm:row-end-1  rounded-2xl"}
+          onClick={() => handleZoom("decrease")}
           variant={"secondary"}
         >
-          <ZoomOut className="scale-1.5!"/>
+          <ZoomOut className="scale-1.5!" />
         </Button>
         <Button
-          className={"col-start-11 col-span-2 w-full h-10 sm:h-12 rounded-2xl"}
+          className={"col-start-3 sm:col-start-11 col-span-2 w-full h-10 sm:h-12 row-start-2 row-end-2 sm:row-start-1 sm:row-end-1  rounded-2xl"}
           onClick={handleResetCamera}
           variant={"secondary"}
         >

@@ -29,11 +29,14 @@ export class SimulationScene {
   public lastLaunchCount = 0;
 
   // camera
-  public cameraX = 0;
-  public cameraY = 0;
-  public lastResetCameraCount = 0;
-  public zoom = 1;
-  public lastZoom = 1;
+  private cameraX = 0;
+  private cameraY = 0;
+  private lastResetCameraCount = 0;
+  private zoom = 1;
+  private lastZoom = 1;
+  private isDragging = false;
+  private lastTouchX = 0;
+  private lastTouchY = 0;
 
   // Ball State
   public ball = {
@@ -106,7 +109,10 @@ export class SimulationScene {
   }
 
   public handleZoom(state: PhysicsState) {
-    this.zoom = Math.min(Math.max(state.zoom, CONFIG.MIN_ZOOM), CONFIG.MAX_ZOOM);
+    this.zoom = Math.min(
+      Math.max(state.zoom, CONFIG.MIN_ZOOM),
+      CONFIG.MAX_ZOOM,
+    );
 
     if (this.zoom === this.lastZoom) return;
 
@@ -200,7 +206,7 @@ export class SimulationScene {
   public updateDimensions(w: number) {
     const isMobile = w < 600;
     const aspect = isMobile ? 4 / 3 : 16 / 10;
-    this.virtualW = isMobile ? 440 : 750;
+    this.virtualW = isMobile ? 400 : 750;
     this.scale = w / this.virtualW;
     return { w, h: Math.round(w / aspect) };
   }
@@ -215,26 +221,44 @@ export class SimulationScene {
   public handlePan() {
     const p = this.p;
 
-    // If mouse is being held down right now
+    // 1. If user is currently touching/holding the screen:
     if (p.mouseIsPressed) {
-      // Make sure mouse is actually inside the canvas
+      // Make sure touch is inside canvas bounds
       if (
-        p.mouseX >= 0 &&
-        p.mouseX <= p.width &&
-        p.mouseY >= 0 &&
-        p.mouseY <= p.height
+        p.mouseX < 0 ||
+        p.mouseX > p.width ||
+        p.mouseY < 0 ||
+        p.mouseY > p.height
       ) {
-        // Calculate how much mouse moved since last frame
-        const dx = p.mouseX - p.pmouseX;
-        const dy = p.mouseY - p.pmouseY;
-
-        // Only move if mouse actually moved
-        if (dx !== 0 || dy !== 0) {
-          const totalScale = this.scale * this.zoom;
-          this.cameraX -= dx / (totalScale || 1);
-          this.cameraY -= dy / (totalScale || 1);
-        }
+        this.isDragging = false;
+        return;
       }
+
+      // FIRST FRAME OF TOUCH: Just record where the finger landed, DO NOT MOVE!
+      if (!this.isDragging) {
+        this.isDragging = true;
+        this.lastTouchX = p.mouseX;
+        this.lastTouchY = p.mouseY;
+        return; // Stop here on frame 1 so it never teleports!
+      }
+
+      // SUBSEQUENT FRAMES: Calculate real finger movement
+      const dx = p.mouseX - this.lastTouchX;
+      const dy = p.mouseY - this.lastTouchY;
+
+      // Save for next frame
+      this.lastTouchX = p.mouseX;
+      this.lastTouchY = p.mouseY;
+
+      // Only move if finger actually moved
+      if (dx !== 0 || dy !== 0) {
+        const totalScale = this.scale * this.zoom || 1;
+        this.cameraX -= dx / totalScale;
+        this.cameraY -= dy / totalScale;
+      }
+    } else {
+      // 2. User lifted their finger: reset dragging state
+      this.isDragging = false;
     }
   }
 
@@ -324,7 +348,7 @@ export class SimulationScene {
     );
 
     const speed = Math.hypot(phys.vx, phys.vy);
-    const speedSign = Math.sign(phys.vy) == 1 ? '' : '-';
+    const speedSign = Math.sign(phys.vy) == 1 ? "" : "-";
     const label = `x: ${phys.x.toFixed(1)}m y: ${phys.y.toFixed(1)}m`;
     const speedLabel = `t = ${this.simTime.toFixed(2)}s, v = ${speedSign}${speed.toFixed(1)} m/s`;
 
@@ -392,8 +416,8 @@ export class SimulationScene {
       const py = this.ballStartY - metersToPx(phys.y);
 
       // Check if mouse is hovering near this point (within 12px)
-      const distToMouse = (mouse.x - px) ** 2 + (mouse.y - py) ** 2
-      const isHovered = distToMouse < 144 // 12^2;
+      const distToMouse = (mouse.x - px) ** 2 + (mouse.y - py) ** 2;
+      const isHovered = distToMouse < 144; // 12^2;
 
       // If the user clicks on this point:
       if (isHovered && p.mouseIsPressed) {

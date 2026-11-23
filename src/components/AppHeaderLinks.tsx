@@ -13,7 +13,7 @@ export function AppHeaderLinks() {
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger 
         render={
-          <Button variant="outline" className={"text-primary-foreground"}>
+          <Button variant="outline">
             Modes <ChevronDown />
           </Button>
         }

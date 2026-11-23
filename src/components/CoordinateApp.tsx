@@ -43,13 +43,13 @@ function CoordinateApp() {
         <ControlPanel setPhysicsState={setState} physicsState={physicsState} />
         <div className="border rounded-2xl">
           <CanvasStage
-            
             physicsState={physicsState}
             setPhysicsState={setState}
             setStats={setPhysicsStats}
           />
         </div>
         <InformationPanel stats={physicsStats} />
+
         <VariablePanel physicsState={physicsState} setPhysicsState={setState} />
       </div>
     </div>
