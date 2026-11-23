@@ -24,6 +24,9 @@ function PhysicsCanvas({
 
   useEffect(() => {
     const container = renderRef.current!;
+    if (!container) return;
+    container.innerHTML = "";
+
     let scene: SimulationScene;
 
     const sketch = (p: p5) => {
@@ -50,12 +53,14 @@ function PhysicsCanvas({
         // if (event && (event.target as HTMLElement)?.tagName !== "CANVAS") {
         //   return;
         // }
-
       };
     };
 
     const instance = new p5(sketch, container);
-    return () => instance.remove();
+    return () => {
+      instance.remove();
+      container.innerHTML = "";
+    };
   }, []);
 
   return <div ref={renderRef} className="w-full select-none touch-none" />;

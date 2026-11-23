@@ -11,21 +11,23 @@ import { Link } from "react-router";
 export function AppHeaderLinks() {
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger>
-        <Button variant="outline" className={"text-primary-foreground"}>
-          Modes <ChevronDown />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger 
+        render={
+          <Button variant="outline" className={"text-primary-foreground"}>
+            Modes <ChevronDown />
+          </Button>
+        }
+      ></DropdownMenuTrigger>
       <DropdownMenuContent align="center">
-        <DropdownMenuItem>
-          <Link to="/coordinate">Coordinate</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Link to="/1-player">1 Player</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Link to="/2-player">2 Players</Link>
-        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={<Link to="/coordinate">Coordinate</Link>}
+        ></DropdownMenuItem>
+        <DropdownMenuItem
+          render={<Link to="/1-player">1 Player</Link>}
+        ></DropdownMenuItem>
+        <DropdownMenuItem
+          render={<Link to="/2-player">2 Players</Link>}
+        ></DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -18,7 +18,7 @@ const CanvasStage = ({
 
   return (
     <div className="rounded-2xl overflow-hidden relative">
-      <PhysicsCanvas physicsState={physicsState} setStats={setStats}/>
+      <PhysicsCanvas key={'coordinate'} physicsState={physicsState} setStats={setStats}/>
       {physicsState["isPaused"] && (
         <div className="absolute inset-0 bg-black/50"></div>
       )}

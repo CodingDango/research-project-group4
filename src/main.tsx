@@ -1,21 +1,22 @@
+import "./index.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "./components/providers/theme-provider.tsx";
 import { BrowserRouter, Routes, Route } from "react-router";
-import "./index.css";
-import App from "./App.tsx";
+import CoordinateApp from "./components/CoordinateApp.tsx";
+import AppLayout from "./components/Layout.tsx";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <ThemeProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<App />} />
-          <Route path="/coordinate" element={<App />} />
-          <Route path="/1-player" element={<App />} />
-          <Route path="/2-player" element={<App />} />
-        </Routes>
-      </BrowserRouter>
-    </ThemeProvider>
-  </StrictMode>,
+  <ThemeProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<CoordinateApp />} />
+          <Route path="/coordinate" element={<CoordinateApp />} />
+          <Route path="/1-player" element={null} />
+          <Route path="/2-player" element={null} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  </ThemeProvider>,
 );
