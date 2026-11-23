@@ -2,10 +2,8 @@ import { Label } from "./ui/label";
 import { Card, CardContent } from "./ui/card";
 import SliderField from "./SliderField";
 import NumberInput from "./NumberInput";
-import AppSelect from "./AppSelect";
 import type {
   PhysicsState,
-  PhysicsStateMode,
   PhysicsStateSetter,
 } from "@/types/types";
 
