@@ -106,7 +106,7 @@ export class SimulationScene {
   }
 
   public handleZoom(state: PhysicsState) {
-    this.zoom = Math.min(Math.max(state.zoom, 0.5), 2);
+    this.zoom = Math.min(Math.max(state.zoom, CONFIG.MIN_ZOOM), CONFIG.MAX_ZOOM);
 
     if (this.zoom === this.lastZoom) return;
 

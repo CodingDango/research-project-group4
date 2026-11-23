@@ -6,25 +6,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { Link } from "react-router";
 
 export function AppHeaderLinks() {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger>
         <Button variant="outline" className={"text-primary-foreground"}>
-          
-            Modes <ChevronDown />
+          Modes <ChevronDown />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center">
         <DropdownMenuItem>
-          <a className="/coordinate">Coordinate</a>
+          <Link to="/coordinate">Coordinate</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <a className="/1-player">1 Player</a>
+          <Link to="/1-player">1 Player</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <a className="/2-player">2 Players</a>
+          <Link to="/2-player">2 Players</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -4,11 +4,12 @@ export const CONFIG = {
   BALL_RADIUS: 15,
   SIM_SPEED: 4,
   CLOUD_SEED: 6767,
-  PPM: 1.5, // 2 pixels for 1 meter i think
+  PPM: 2, // 2 pixels for 1 meter i think
   DASH_LENGTH: 6,
   DASH_GAP: 4,
   GRID_STEP: 15,
-  MAX_ZOOM: 2,
+  MIN_ZOOM: 0.25,
+  MAX_ZOOM: 4,
   COLORS: {
     ball: "#df6035",
     ballBorder: "#FFFFFF",

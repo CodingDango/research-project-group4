@@ -6,6 +6,7 @@ import { AiOutlineZoomIn as ZoomIn, AiOutlineZoomOut as ZoomOut} from "react-ico
 
 import { Card, CardContent } from "./ui/card";
 import { useState } from "react";
+import { CONFIG } from "@/lib/config";
 
 const ControlPanel = ({
   physicsState,
@@ -34,7 +35,7 @@ const ControlPanel = ({
   };
   const handleZoom = (method: 'decrease' | 'increase') => {
     const change = method == 'decrease' ? -0.1 : 0.1;
-    const newZoom = Math.min(Math.max(physicsState['zoom'] + change, 0.5), 2);
+    const newZoom = Math.min(Math.max(physicsState['zoom'] + change, CONFIG.MIN_ZOOM), CONFIG.MAX_ZOOM);
     setPhysicsState('zoom', newZoom);
   }
 
