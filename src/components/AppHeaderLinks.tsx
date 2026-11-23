@@ -14,7 +14,7 @@ export function AppHeaderLinks() {
       <DropdownMenuTrigger 
         render={
           <Button variant="outline">
-            Modes <ChevronDown />
+            Tool Modes <ChevronDown />
           </Button>
         }
       ></DropdownMenuTrigger>

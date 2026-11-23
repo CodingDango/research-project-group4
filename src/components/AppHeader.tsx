@@ -10,8 +10,11 @@ const AppHeader = () => {
           <img src={Logo} className="inline-block h-6" />
           <h1>Logoipsum</h1>
         </div>
-        <AppHeaderLinks />
-        <ModeToggle />
+
+        <div className="flex gap-4 items-center">
+          <AppHeaderLinks />
+          <ModeToggle />
+        </div>
       </div>
     </div>
   );
