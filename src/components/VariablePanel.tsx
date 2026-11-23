@@ -53,7 +53,7 @@ const VariablePanel = ({
                 />
               </div>
 
-              <div className="row-span-2 grid grid-cols-2 ">
+              <div className="row-span-2 grid grid-cols-1 sm:grid-cols-2 ">
                 <div>
                   <Label className="w-24 inline-block">Gravity:</Label>
                   <NumberInput
@@ -73,22 +73,6 @@ const VariablePanel = ({
                     key={"gravity"}
                     onChange={(v) => setPhysicsState("gravity", v)}
                   />
-                </div>
-                <div className="flex gap-4 items-center -mt-4">
-                  <Label className="text-nowrap w-28">Select Mode</Label>
-                  <div className="flex-1">
-                    <AppSelect
-                      items={[
-                        { value: "sandbox", label: "Sandbox" },
-                        { value: "coordinate", label: "Coordinate Plane" },
-                      ]}
-                      label="Select Mode"
-                      defaultValue={physicsState["mode"]}
-                      onChange={(value) =>
-                        setPhysicsState("mode", value as PhysicsStateMode)
-                      }
-                    />
-                  </div>
                 </div>
               </div>
             </div>
