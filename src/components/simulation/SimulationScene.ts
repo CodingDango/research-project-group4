@@ -175,7 +175,7 @@ export class SimulationScene {
 
     this.setupCamera();
     this.drawCoordinateGrid();
-    this.drawTrail();
+    this.drawTrail(state);
     this.drawVectorArrows(state);
     this.drawAimingTrajectory(state);
     this.drawApexIndicator(state);
@@ -266,7 +266,6 @@ export class SimulationScene {
     const worldMouseY = this.cameraY + p.mouseY / totalScale;
 
     if (!this.isDragging) {
-      console.log("Im now dragging");
       this.isDragging = true;
       this.lastTouchX = p.mouseX;
       this.lastTouchY = p.mouseY;
@@ -280,10 +279,8 @@ export class SimulationScene {
       return;
     }
     if (this.isScrubbingBall) {
-      console.log("Im scrubbing");
       this.scrubTrajectory(worldMouseX);
     } else {
-      console.log("Im just panniing camera");
       const dx = p.mouseX - this.lastTouchX;
       const dy = p.mouseY - this.lastTouchY;
       this.lastTouchX = p.mouseX;
@@ -497,7 +494,10 @@ export class SimulationScene {
     const reach = 144; // 12^2;
     const isHovered = distToMouse < reach;
 
-    if ((isHovered && p.mouseIsPressed) || (this.isScrubbingBall && dx < reach)) {
+    if (
+      (isHovered && p.mouseIsPressed) ||
+      (this.isScrubbingBall && dx < reach)
+    ) {
       this.simTime = t; // Snap time to this exact point!
       this.hasLaunched = true;
       this.launchSnapshot = this.snapshot(state);
@@ -508,7 +508,6 @@ export class SimulationScene {
       this.ball.vx = metersToPx(phys.vx);
       this.ball.vy = metersToPx(-phys.vy);
     }
-
 
     // DRAW THE POINT
     p.push();
@@ -574,18 +573,33 @@ export class SimulationScene {
     p.text(`max height = ${formulaMaxHeight.toFixed(2)} m`, apexX, apexY - 32);
   }
 
-  private drawTrail() {
+  private drawTrail(state: PhysicsState) {
+    // If ball hasn't moved yet, don't draw
+    if (this.simTime <= 0) return;
+
     const p = this.p;
+    const launch = this.hasLaunched ? this.launchSnapshot : state;
+    const { speed, angle, gravity } = launch;
+    if (speed <= 0 || gravity <= 0) return;
+
+    p.noFill();
     p.stroke(CONFIG.COLORS.ball);
     p.strokeWeight(3);
-    for (let i = 0; i < this.trail.length - 2; i += 4) {
-      p.line(
-        this.trail[i].x,
-        this.trail[i].y,
-        this.trail[i + 2].x,
-        this.trail[i + 2].y,
-      );
+
+    // Sample 40 smooth points from 0 up to current simTime
+    const STEPS = 40;
+
+    p.beginShape();
+    for (let i = 0; i <= STEPS; i++) {
+      const t = (i / STEPS) * this.simTime;
+      const phys = getPhysicsAtTime(t, speed, angle, gravity);
+
+      const px = this.ballStartX + metersToPx(phys.x);
+      const py = this.ballStartY - metersToPx(phys.y);
+
+      p.vertex(px, py);
     }
+    p.endShape();
   }
 
   private drawBall() {
