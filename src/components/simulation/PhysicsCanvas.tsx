@@ -44,7 +44,7 @@ function PhysicsCanvas({
 
       p.draw = () => {
         const dt = Math.min(p.deltaTime / 1000, 0.05);
-        scene.handlePan();
+
         scene.update(dt, stateRef.current, setStatsRef.current);
         scene.render(stateRef.current);
       };

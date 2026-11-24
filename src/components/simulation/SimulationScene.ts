@@ -35,6 +35,7 @@ export class SimulationScene {
   private zoom = 1;
   private lastZoom = 1;
   private isDragging = false;
+  private isScrubbingBall = false;
   private lastTouchX = 0;
   private lastTouchY = 0;
 
@@ -139,6 +140,7 @@ export class SimulationScene {
   public update(dt: number, state: PhysicsState, setStats: PhysicsStatsSetter) {
     this.handleButtons(state);
     this.handleZoom(state);
+    this.handleCanvasTouch();
     this.updateStats(state, setStats);
 
     if (!this.isFiring || state.isPaused) return;
@@ -178,7 +180,7 @@ export class SimulationScene {
     this.drawAimingTrajectory(state);
     this.drawApexIndicator(state);
     this.drawRangeIndicator(state);
-    this.drawInspectionPoints(state);
+    this.drawApexInspectionPoint(state);
     this.drawFloatingBadge(state);
     this.drawBall();
 
@@ -218,49 +220,128 @@ export class SimulationScene {
     p.translate(-this.cameraX, -this.cameraY);
   }
 
-  public handlePan() {
+  private scrubTrajectory(worldMouseX: number) {
+    const { speed, angle, gravity } = this.launchSnapshot;
+    const rad = (angle * Math.PI) / 180;
+    const v0x = speed * Math.cos(rad);
+    if (v0x <= 0) return;
+
+    // Time = Distance / Speed
+    const draggedMetersX = pxToMeters(worldMouseX - this.ballStartX);
+    const targetTime = draggedMetersX / v0x;
+
+    this.simTime = Math.max(0, Math.min(this.totalFlightTime, targetTime));
+    this.isFiring = false;
+
+    // Move ball
+    const phys = getPhysicsAtTime(this.simTime, speed, angle, gravity);
+    this.ball.x = this.ballStartX + metersToPx(phys.x);
+    this.ball.y = this.ballStartY - metersToPx(phys.y);
+    this.ball.vx = metersToPx(phys.vx);
+    this.ball.vy = metersToPx(-phys.vy);
+  }
+
+  public handleCanvasTouch() {
     const p = this.p;
 
-    // 1. If user is currently touching/holding the screen:
-    if (p.mouseIsPressed) {
-      // Make sure touch is inside canvas bounds
-      if (
-        p.mouseX < 0 ||
-        p.mouseX > p.width ||
-        p.mouseY < 0 ||
-        p.mouseY > p.height
-      ) {
-        this.isDragging = false;
-        return;
-      }
+    if (!p.mouseIsPressed) {
+      this.isDragging = false;
+      this.isScrubbingBall = false;
+      return;
+    }
 
-      // FIRST FRAME OF TOUCH: Just record where the finger landed, DO NOT MOVE!
-      if (!this.isDragging) {
-        this.isDragging = true;
-        this.lastTouchX = p.mouseX;
-        this.lastTouchY = p.mouseY;
-        return; // Stop here on frame 1 so it never teleports!
-      }
+    if (
+      p.mouseX < 0 ||
+      p.mouseX > p.width ||
+      p.mouseY < 0 ||
+      p.mouseY > p.height
+    ) {
+      this.isDragging = false;
+      this.isScrubbingBall = false;
+      return;
+    }
 
-      // SUBSEQUENT FRAMES: Calculate real finger movement
-      const dx = p.mouseX - this.lastTouchX;
-      const dy = p.mouseY - this.lastTouchY;
+    const totalScale = this.scale * this.zoom || 1;
+    const worldMouseX = this.cameraX + p.mouseX / totalScale;
+    const worldMouseY = this.cameraY + p.mouseY / totalScale;
 
-      // Save for next frame
+    if (!this.isDragging) {
+      console.log("Im now dragging");
+      this.isDragging = true;
       this.lastTouchX = p.mouseX;
       this.lastTouchY = p.mouseY;
 
-      // Only move if finger actually moved
-      if (dx !== 0 || dy !== 0) {
-        const totalScale = this.scale * this.zoom || 1;
-        this.cameraX -= dx / totalScale;
-        this.cameraY -= dy / totalScale;
+      // Did user touch the ball?
+      const dx = worldMouseX - this.ball.x;
+      const dy = worldMouseY - this.ball.y;
+      if (dx * dx + dy * dy < 900) {
+        this.isScrubbingBall = true;
       }
+      return;
+    }
+    if (this.isScrubbingBall) {
+      console.log("Im scrubbing");
+      this.scrubTrajectory(worldMouseX);
     } else {
-      // 2. User lifted their finger: reset dragging state
-      this.isDragging = false;
+      console.log("Im just panniing camera");
+      const dx = p.mouseX - this.lastTouchX;
+      const dy = p.mouseY - this.lastTouchY;
+      this.lastTouchX = p.mouseX;
+      this.lastTouchY = p.mouseY;
+
+      this.panCamera(dx, dy, totalScale);
     }
   }
+
+  private panCamera(dx: number, dy: number, totalScale: number) {
+    if (dx === 0 && dy === 0) return;
+    this.cameraX -= dx / totalScale;
+    this.cameraY -= dy / totalScale;
+  }
+
+  // public handlePan() {
+  //   const p = this.p;
+
+  //   // 1. If user is currently touching/holding the screen:
+  //   if (p.mouseIsPressed) {
+  //     // Make sure touch is inside canvas bounds
+  //     if (
+  //       p.mouseX < 0 ||
+  //       p.mouseX > p.width ||
+  //       p.mouseY < 0 ||
+  //       p.mouseY > p.height
+  //     ) {
+  //       this.isDragging = false;
+  //       return;
+  //     }
+
+  //     // FIRST FRAME OF TOUCH: Just record where the finger landed, DO NOT MOVE!
+  //     if (!this.isDragging) {
+  //       this.isDragging = true;
+  //       this.lastTouchX = p.mouseX;
+  //       this.lastTouchY = p.mouseY;
+  //       return; // Stop here on frame 1 so it never teleports!
+  //     }
+
+  //     // SUBSEQUENT FRAMES: Calculate real finger movement
+  //     const dx = p.mouseX - this.lastTouchX;
+  //     const dy = p.mouseY - this.lastTouchY;
+
+  //     // Save for next frame
+  //     this.lastTouchX = p.mouseX;
+  //     this.lastTouchY = p.mouseY;
+
+  //     // Only move if finger actually moved
+  //     if (dx !== 0 || dy !== 0) {
+  //       const totalScale = this.scale * this.zoom || 1;
+  //       this.cameraX -= dx / totalScale;
+  //       this.cameraY -= dy / totalScale;
+  //     }
+  //   } else {
+  //     // 2. User lifted their finger: reset dragging state
+  //     this.isDragging = false;
+  //   }
+  // }
 
   private drawCoordinateGrid() {
     const p = this.p;
@@ -386,7 +467,7 @@ export class SimulationScene {
     };
   }
 
-  private drawInspectionPoints(state: PhysicsState) {
+  private drawApexInspectionPoint(state: PhysicsState) {
     const p = this.p;
     const launch = this.hasLaunched ? this.launchSnapshot : state;
     const duration = calculateFlightTime(
@@ -397,50 +478,45 @@ export class SimulationScene {
 
     if (duration <= 0) return;
 
-    const step = 0.125;
-    const totalSteps = 1 / step + 1;
-    const fractions = Array.from({ length: totalSteps }, (_, i) => i * step);
+    const point = 0.5;
     const mouse = this.getWorldMouse();
+    const t = point * duration;
+    const phys = getPhysicsAtTime(
+      t,
+      launch.speed,
+      launch.angle,
+      launch.gravity,
+    );
 
-    for (const frac of fractions) {
-      const t = frac * duration;
-      const phys = getPhysicsAtTime(
-        t,
-        launch.speed,
-        launch.angle,
-        launch.gravity,
-      );
+    const px = this.ballStartX + metersToPx(phys.x);
+    const py = this.ballStartY - metersToPx(phys.y);
 
-      // Screen pixel position of this point
-      const px = this.ballStartX + metersToPx(phys.x);
-      const py = this.ballStartY - metersToPx(phys.y);
+    const dx = (mouse.x - px) ** 2;
+    const dy = (mouse.y - py) ** 2;
+    const distToMouse = dx + dy;
+    const reach = 144; // 12^2;
+    const isHovered = distToMouse < reach;
 
-      // Check if mouse is hovering near this point (within 12px)
-      const distToMouse = (mouse.x - px) ** 2 + (mouse.y - py) ** 2;
-      const isHovered = distToMouse < 144; // 12^2;
+    if ((isHovered && p.mouseIsPressed) || (this.isScrubbingBall && dx < reach)) {
+      this.simTime = t; // Snap time to this exact point!
+      this.hasLaunched = true;
+      this.launchSnapshot = this.snapshot(state);
 
-      // If the user clicks on this point:
-      if (isHovered && p.mouseIsPressed) {
-        this.simTime = t; // Snap time to this exact point!
-        this.isFiring = false; // Pause flight so user can inspect
-        this.hasLaunched = true;
-        this.launchSnapshot = this.snapshot(state);
-
-        // Instantly snap ball coordinates
-        this.ball.x = px;
-        this.ball.y = py;
-        this.ball.vx = metersToPx(phys.vx);
-        this.ball.vy = metersToPx(-phys.vy);
-      }
-
-      // DRAW THE POINT
-      p.push();
-      p.fill(CONFIG.COLORS.ball);
-      p.stroke(255);
-      p.strokeWeight(2);
-      p.circle(px, py, isHovered ? 10 : 7);
-      p.pop();
+      // Instantly snap ball coordinates
+      this.ball.x = px;
+      this.ball.y = py;
+      this.ball.vx = metersToPx(phys.vx);
+      this.ball.vy = metersToPx(-phys.vy);
     }
+
+
+    // DRAW THE POINT
+    p.push();
+    p.fill(CONFIG.COLORS.ball);
+    p.stroke(255);
+    p.strokeWeight(2);
+    p.circle(px, py, isHovered ? 10 : 7);
+    p.pop();
   }
 
   private drawRangeIndicator(state: PhysicsState) {
