@@ -63,10 +63,11 @@ export class SimulationScene {
   };
 
   // theme
-  private currentTheme: Theme = "dark";
+  private currentTheme: Theme = 'dark';
 
   constructor(p: p5, initialState: PhysicsState) {
     this.p = p;
+    this.currentTheme = localStorage.getItem('vite-ui-theme') as Theme;
     this.launchSnapshot = this.snapshot(initialState);
     this.p.randomSeed(CONFIG.CLOUD_SEED);
   }
@@ -328,7 +329,7 @@ export class SimulationScene {
 
     // GRID LINES
     p.stroke(this.getTheme('gridLines'));
-    p.strokeWeight(1);
+    p.strokeWeight(CONFIG.GRID[this.currentTheme].gridLineStroke);
 
     // Vertical lines across the whole visible screen
     const startX =
@@ -478,10 +479,10 @@ export class SimulationScene {
 
     // draw the point
     p.push();
-    p.fill(this.getTheme('ball'));
-    p.stroke(255);
-    p.strokeWeight(2);
-    p.circle(px, py, isHovered ? 10 : 7);
+    p.fill(this.getTheme('point'));
+    p.stroke(this.getTheme('pointOutline'));
+    p.strokeWeight(1);
+    p.circle(px, py, isHovered ? 11 : 8);
     p.pop();
   }
 

@@ -42,6 +42,8 @@ export interface ThemeColors {
   gridLines: string;
   gridAxis: string;
   hudText: string;
+  pointOutline: string;
+  point: string;
 }
 
 export type Theme = 'light' | 'dark';

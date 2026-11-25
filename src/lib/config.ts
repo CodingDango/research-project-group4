@@ -12,6 +12,16 @@ export const CONFIG = {
   GRID_STEP: 15,
   MIN_ZOOM: 0.25,
   MAX_ZOOM: 4,
+  GRID: {
+    dark: {
+      gridLineStroke: 0.8,
+    },
+
+    light: {
+      gridLineStroke: 0.25,
+    },
+  },
+
   COLORS: {
     dark: {
       ball: "#df6035",
@@ -27,24 +37,28 @@ export const CONFIG = {
       gridLines: "#2a2a2a",
       gridAxis: "#7a787a",
       hudText: "#FFF",
+      point: "#df6035",
+      pointOutline: "#df6035",
     } as ThemeColors,
     light: {
-      gridBg: "#121212",
-      gridLine: "#2a2a2a",
-      gridAxis: "#555555",
+      gridBg: "#ffffff",
+      gridLine: "#999999",
+      gridAxis: "#161616",
       ball: "#df6035",
-      ballBorder: "#3b82f6",
-      rangeLine: "#34d399",
-      apexLine: "#fbbf24",
+      ballBorder: "#df6035",
+      rangeLine: "#1A1919",
+      apexLine: "#1A1919",
       badgeBg: "rgba(30, 30, 30, 0.9)",
       badgeOutline: "#444",
       badgeText: "#efefef",
       badgeTextSecondary: "#aaa",
-      hudText: "#aaa",
-      trajectory: '#f33e54',
-      gridText: '#FFFFFF',
-      badgeSecondaryText: '#df6035',
-      gridLines: '#2a2a2a',
+      hudText: "#000000",
+      trajectory: "#f33e54",
+      gridText: "#FFFFFF",
+      badgeSecondaryText: "#df6035",
+      gridLines: "#2a2a2a",
+      point: "#df6035",
+      pointOutline: "#df6035",
     } as ThemeColors,
   },
 };

@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { SimulationScene } from "@/components/simulation/SimulationScene";
 import type { PhysicsState, PhysicsStatsSetter, Theme } from "@/types/types";
 import { useTheme } from "../providers/theme-provider";
+import { resolveTheme } from "@/lib/utils";
 
 function PhysicsCanvas({
   physicsState,
@@ -15,7 +16,7 @@ function PhysicsCanvas({
   const stateRef = useRef(physicsState);
   const setStatsRef = useRef(setStats);
   const simulationRef = useRef<SimulationScene>(null);
-  const { theme } = useTheme(); 
+  const { theme } = useTheme();
 
   useEffect(() => {
     stateRef.current = physicsState;
@@ -26,9 +27,8 @@ function PhysicsCanvas({
   }, [setStats]);
 
   useEffect(() => {
-    const newTheme: Theme = theme === 'system' ? 'dark' : theme;
-    simulationRef.current?.setTheme(newTheme);
-  }, [theme])
+    simulationRef.current?.setTheme(resolveTheme(theme));
+  }, [theme]);
 
   useEffect(() => {
     const container = renderRef.current!;
