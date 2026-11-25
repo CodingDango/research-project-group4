@@ -7,19 +7,19 @@ import {
   metersToPx,
   pxToMeters,
 } from "@/lib/physics";
-import type { PhysicsState, PhysicsStatsSetter } from "@/types/types";
+import type { PhysicsState, PhysicsStatsSetter, Theme, ThemeColors } from "@/types/types";
 import { CONFIG } from "@/lib/config";
 
 export class SimulationScene {
   private p: p5;
 
-  // Layout & Scaling
+  // layout
   public virtualW = 800;
   public scale = 1;
-  public ballStartX = 60;
-  public ballStartY = CONFIG.GROUND_Y - CONFIG.BALL_RADIUS / 2;
 
   // Physics
+  public ballStartX = 60;
+  public ballStartY = CONFIG.GROUND_Y - CONFIG.BALL_RADIUS / 2;
   public simTime = 0;
   public totalFlightTime = 0;
   public isFiring = false;
@@ -62,10 +62,21 @@ export class SimulationScene {
     mode: string;
   };
 
+  // theme
+  private currentTheme: Theme = "dark";
+
   constructor(p: p5, initialState: PhysicsState) {
     this.p = p;
     this.launchSnapshot = this.snapshot(initialState);
     this.p.randomSeed(CONFIG.CLOUD_SEED);
+  }
+
+  public setTheme(theme: Theme) {
+    this.currentTheme = theme;
+  }
+
+  private getTheme(key: keyof ThemeColors) {
+    return CONFIG.COLORS[this.currentTheme][key];
   }
 
   private snapshot(state: PhysicsState) {
@@ -296,53 +307,9 @@ export class SimulationScene {
     this.cameraY -= dy / totalScale;
   }
 
-  // public handlePan() {
-  //   const p = this.p;
-
-  //   // 1. If user is currently touching/holding the screen:
-  //   if (p.mouseIsPressed) {
-  //     // Make sure touch is inside canvas bounds
-  //     if (
-  //       p.mouseX < 0 ||
-  //       p.mouseX > p.width ||
-  //       p.mouseY < 0 ||
-  //       p.mouseY > p.height
-  //     ) {
-  //       this.isDragging = false;
-  //       return;
-  //     }
-
-  //     // FIRST FRAME OF TOUCH: Just record where the finger landed, DO NOT MOVE!
-  //     if (!this.isDragging) {
-  //       this.isDragging = true;
-  //       this.lastTouchX = p.mouseX;
-  //       this.lastTouchY = p.mouseY;
-  //       return; // Stop here on frame 1 so it never teleports!
-  //     }
-
-  //     // SUBSEQUENT FRAMES: Calculate real finger movement
-  //     const dx = p.mouseX - this.lastTouchX;
-  //     const dy = p.mouseY - this.lastTouchY;
-
-  //     // Save for next frame
-  //     this.lastTouchX = p.mouseX;
-  //     this.lastTouchY = p.mouseY;
-
-  //     // Only move if finger actually moved
-  //     if (dx !== 0 || dy !== 0) {
-  //       const totalScale = this.scale * this.zoom || 1;
-  //       this.cameraX -= dx / totalScale;
-  //       this.cameraY -= dy / totalScale;
-  //     }
-  //   } else {
-  //     // 2. User lifted their finger: reset dragging state
-  //     this.isDragging = false;
-  //   }
-  // }
-
   private drawCoordinateGrid() {
     const p = this.p;
-    p.background("#202020");
+    p.background(this.getTheme('gridBg'));
 
     const gridStepMeters = CONFIG.GRID_STEP;
     const gridStepPx = metersToPx(gridStepMeters);
@@ -360,7 +327,7 @@ export class SimulationScene {
     const visibleBottom = this.cameraY + visibleH + 100; // <-- Now accounts for zoom!
 
     // GRID LINES
-    p.stroke("#2a2a2a");
+    p.stroke(this.getTheme('gridLines'));
     p.strokeWeight(1);
 
     // Vertical lines across the whole visible screen
@@ -378,7 +345,7 @@ export class SimulationScene {
     }
 
     // X AND Y AXIS
-    p.stroke("#7a787a");
+    p.stroke(this.getTheme('gridAxis'));
     p.strokeWeight(2);
 
     // X-Axis
@@ -397,7 +364,7 @@ export class SimulationScene {
     if (duration <= 0) return;
 
     p.noFill();
-    p.stroke(`${CONFIG.COLORS.ball}40`);
+    p.stroke(`${this.getTheme('ball')}40`);
     p.strokeWeight(3);
 
     const STEPS = 60;
@@ -440,17 +407,17 @@ export class SimulationScene {
     const boxX = this.ball.x;
     const boxY = this.ball.y - CONFIG.BALL_RADIUS - 22;
 
-    p.fill(CONFIG.COLORS.floatingBadgeBg);
-    p.stroke(CONFIG.COLORS.floatingBadgeOutline);
+    p.fill(this.getTheme('badgeBg'));
+    p.stroke(this.getTheme('badgeOutline'));
     p.strokeWeight(1);
     p.rectMode(p.CENTER);
     p.rect(boxX, boxY, boxW, boxH, 5);
 
-    // Text inside the pill
+    // Text inside the badge
     p.noStroke();
     p.fill(255);
     p.text(label, boxX, boxY - 5);
-    p.fill(CONFIG.COLORS.floatingBadgeSecondaryText); // muted text for time & speed
+    p.fill(this.getTheme('badgeSecondaryText'));
     p.text(speedLabel, boxX, boxY + 6);
 
     p.pop();
@@ -491,27 +458,27 @@ export class SimulationScene {
     const dx = (mouse.x - px) ** 2;
     const dy = (mouse.y - py) ** 2;
     const distToMouse = dx + dy;
-    const reach = 144; // 12^2;
+    const reach = 144; // 12^2 so about 12 pixels range;
     const isHovered = distToMouse < reach;
 
     if (
       (isHovered && p.mouseIsPressed) ||
       (this.isScrubbingBall && dx < reach)
     ) {
-      this.simTime = t; // Snap time to this exact point!
+      this.simTime = t;
       this.hasLaunched = true;
       this.launchSnapshot = this.snapshot(state);
 
-      // Instantly snap ball coordinates
+      // Snap coords
       this.ball.x = px;
       this.ball.y = py;
       this.ball.vx = metersToPx(phys.vx);
       this.ball.vy = metersToPx(-phys.vy);
     }
 
-    // DRAW THE POINT
+    // draw the point
     p.push();
-    p.fill(CONFIG.COLORS.ball);
+    p.fill(this.getTheme('ball'));
     p.stroke(255);
     p.strokeWeight(2);
     p.circle(px, py, isHovered ? 10 : 7);
@@ -528,16 +495,15 @@ export class SimulationScene {
     const endX = this.ballStartX + metersToPx(range);
     const y = CONFIG.GROUND_Y + CONFIG.GRID_STEP;
     const tick = 6;
-    const color = CONFIG.COLORS.rangeLineColorCoords;
 
-    p.stroke(color);
+    p.stroke(this.getTheme('rangeLine'));
     p.strokeWeight(2);
     this.drawDashedLine(startX, y, endX, y);
     p.line(startX, y - tick, startX, y + tick);
     p.line(endX, y - tick, endX, y + tick);
 
     p.noStroke();
-    p.fill(color);
+    p.fill(this.getTheme('rangeLine'));
     p.textSize(12);
     p.textAlign(p.CENTER, p.TOP);
     p.text(`range = ${range.toFixed(2)} m`, (startX + endX) / 2, y + tick + 4);
@@ -559,13 +525,12 @@ export class SimulationScene {
 
     const apexX = this.ballStartX + metersToPx(formulaRange / 2);
     const apexY = this.ballStartY - metersToPx(formulaMaxHeight);
-    const color = CONFIG.COLORS.apexLineColorCoords;
-
-    p.stroke(color);
+  
+    p.stroke(this.getTheme('apexLine'));
     p.strokeWeight(2);
     this.drawDashedLine(apexX, this.ballStartY, apexX, apexY);
 
-    p.fill(color);
+    p.fill(this.getTheme('apexLine'));
     p.noStroke();
     p.circle(apexX, apexY, 6);
     p.textSize(12);
@@ -583,7 +548,7 @@ export class SimulationScene {
     if (speed <= 0 || gravity <= 0) return;
 
     p.noFill();
-    p.stroke(CONFIG.COLORS.ball);
+    p.stroke(this.getTheme('ball'));
     p.strokeWeight(3);
 
     // Sample 40 smooth points from 0 up to current simTime
@@ -604,16 +569,15 @@ export class SimulationScene {
 
   private drawBall() {
     const p = this.p;
-    p.fill(CONFIG.COLORS.ball);
-    p.stroke(CONFIG.COLORS.ballBorder);
+    p.fill(this.getTheme('ball'));
+    p.stroke(this.getTheme('ballBorder'));
     p.strokeWeight(2);
     p.circle(this.ball.x, this.ball.y, CONFIG.BALL_RADIUS);
   }
 
   private drawHUD() {
     const p = this.p;
-    const color = CONFIG.COLORS.coordinateTextColor;
-    p.fill(color);
+    p.fill(this.getTheme('hudText'));
     p.noStroke();
     p.textSize(16);
     p.text(`${p.frameRate().toFixed(0)} FPS`, 10, 25);
@@ -667,7 +631,7 @@ export class SimulationScene {
       this.ball.y,
       velocityArrowDx,
       velocityArrowDy,
-      CONFIG.COLORS.ball,
+      this.getTheme('ball'),
     );
   }
 

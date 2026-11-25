@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
 import p5 from "p5";
+import { useEffect, useRef } from "react";
 import { SimulationScene } from "@/components/simulation/SimulationScene";
-import type { PhysicsState, PhysicsStatsSetter } from "@/types/types";
+import type { PhysicsState, PhysicsStatsSetter, Theme } from "@/types/types";
+import { useTheme } from "../providers/theme-provider";
 
 function PhysicsCanvas({
   physicsState,
@@ -13,6 +14,8 @@ function PhysicsCanvas({
   const renderRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(physicsState);
   const setStatsRef = useRef(setStats);
+  const simulationRef = useRef<SimulationScene>(null);
+  const { theme } = useTheme(); 
 
   useEffect(() => {
     stateRef.current = physicsState;
@@ -21,6 +24,11 @@ function PhysicsCanvas({
   useEffect(() => {
     setStatsRef.current = setStats;
   }, [setStats]);
+
+  useEffect(() => {
+    const newTheme: Theme = theme === 'system' ? 'dark' : theme;
+    simulationRef.current?.setTheme(newTheme);
+  }, [theme])
 
   useEffect(() => {
     const container = renderRef.current!;
@@ -32,6 +40,7 @@ function PhysicsCanvas({
     const sketch = (p: p5) => {
       p.setup = () => {
         scene = new SimulationScene(p, stateRef.current);
+        simulationRef.current = scene;
         const { w, h } = scene.updateDimensions(container.clientWidth);
         p.createCanvas(w, h);
         p.angleMode(p.DEGREES);
@@ -44,7 +53,6 @@ function PhysicsCanvas({
 
       p.draw = () => {
         const dt = Math.min(p.deltaTime / 1000, 0.05);
-
         scene.update(dt, stateRef.current, setStatsRef.current);
         scene.render(stateRef.current);
       };

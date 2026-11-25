@@ -28,6 +28,24 @@ export type PhysicsStateSetter = (
 
 export type PhysicsStateMode = "sandbox" | "coordinate";
 
+export interface ThemeColors {
+  ball: string;
+  ballBorder: string;
+  apexLine: string;
+  rangeLine: string;
+  trajectory: string;
+  gridText: string;
+  badgeBg: string;
+  badgeOutline: string;
+  badgeSecondaryText: string;
+  gridBg: string;
+  gridLines: string;
+  gridAxis: string;
+  hudText: string;
+}
+
+export type Theme = 'light' | 'dark';
+
 export interface AppSelectItem {
   label: string;
   value: string;
