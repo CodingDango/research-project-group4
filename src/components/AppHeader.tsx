@@ -1,4 +1,5 @@
 import { AppHeaderLinks } from "./AppHeaderLinks";
+import { FormulaDialog } from "./FormulaDialog";
 import { ModeToggle } from "./ui/mode-toggle";
 import Logo from "@/assets/logo.svg";
 
@@ -13,6 +14,7 @@ const AppHeader = () => {
 
         <div className="flex gap-4 items-center">
           <AppHeaderLinks />
+          <FormulaDialog/>
           <ModeToggle />
           
         </div>

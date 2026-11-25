@@ -1,7 +1,7 @@
 import p5 from "p5";
 import { useEffect, useRef } from "react";
 import { SimulationScene } from "@/components/simulation/SimulationScene";
-import type { PhysicsState, PhysicsStatsSetter, Theme } from "@/types/types";
+import type { PhysicsState, PhysicsStatsSetter } from "@/types/types";
 import { useTheme } from "../providers/theme-provider";
 import { resolveTheme } from "@/lib/utils";
 

@@ -38,7 +38,7 @@ function CoordinateApp() {
   };
 
   return (
-    <div className="max-w-4xl p-4 my-12 sm:p-6 mx-auto">
+    <div className="max-w-4xl p-4 my-8 sm:p-6 mx-auto">
       <div className="flex flex-col gap-6">
         <ControlPanel setPhysicsState={setState} physicsState={physicsState} />
         <div className="border rounded-2xl">
